@@ -34,16 +34,17 @@
             transition: 0.2s;
         }
         button:hover { background: #7a572f; box-shadow: 0 0 6px #e2a34a; }
+        button:disabled { background: #3a3a2a; border-color: #5a5a3a; cursor: not-allowed; opacity: 0.6; }
         .logout-btn, .danger-btn { background: #3a2a1c; border-color: #aa6f3c; }
-        .inventory-grid, .member-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; max-height: 420px; overflow-y: auto; padding: 6px; }
-        .inv-item, .member-item {
+        .inventory-grid, .member-list, .friend-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; max-height: 420px; overflow-y: auto; padding: 6px; }
+        .inv-item, .member-item, .friend-item {
             background: #131a1f; border-radius: 18px; padding: 8px 12px;
             display: flex; justify-content: space-between; align-items: center;
             border-left: 4px solid #d6903a; font-size: 0.85rem;
         }
         .inv-name { word-break: break-word; max-width: 65%; cursor: pointer; text-decoration: underline dotted #b87c3a; }
         .inv-qty { background: #2e2a21; padding: 2px 8px; border-radius: 40px; font-weight: bold; }
-        .recipe-list { display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto; }
+        .recipe-list { display: flex; flex-direction: column; gap: 12px; max-height: 600px; overflow-y: auto; }
         .recipe-card {
             background: #1b2329; border-radius: 18px; padding: 12px; border: 1px solid #7c673d;
         }
@@ -57,73 +58,248 @@
         .search-panel { background: #1e2a24; border-radius: 20px; padding: 12px; margin-top: 12px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
         footer { text-align: center; margin-top: 30px; font-size: 0.7rem; color: #6a5a40; }
         .vote-request { background: #2a3a2a; margin: 8px 0; padding: 12px; border-radius: 16px; }
-        .vote-buttons button { width: auto; margin: 0 4px; padding: 4px 12px; }
+        .team-key { font-family: monospace; background: #2a2a1a; padding: 4px 8px; border-radius: 12px; display: inline-block; }
     </style>
 </head>
 <body>
 <div class="container" id="app"></div>
 
 <script>
-    // --------------------------------------------------------------
-    // 物资库、描述、合成配方（为节省篇幅保持简洁但完整）
-    // --------------------------------------------------------------
+    // =============================================================
+    // 物资描述库（完整，包含括号内说明）
+    // =============================================================
     const ITEM_DESCRIPTIONS = {
-        "树枝": "最普通的树枝，路边就捡到了！","圆木": "表面的水让它们里面有些潮湿","碎布条": "从路边丢弃的衣服上撕下的布条",
-        "兽骨": "路边随处可见的腐烂的肉堆里捡到的骨头","小石子": "最普通的小石子","石块": "比小石子稍大一些",
-        "石板": "表面光滑平整","土豆块茎": "发芽的土豆块茎，不能食用但适合种植","小刀": "表面有点生锈，但还能用",
-        "玻璃杯": "表面有些裂痕","可食用水(500ml)": "超级珍贵的可以喝的水","铁片(250cm²)": "稍微有点薄，没什么锈迹",
-        "野菜": "虽然不知道是什么菜，但可以吃","铁丝": "不知道从哪里扯下来的一段","铁钉": "长短不一，锈迹斑斑",
-        "麻绳(3m)": "已经有些毛躁，但承受一个人的重量似乎不成问题","空罐头盒": "边缘锋利，可做简易锅",
-        "打火机": "生火的事情就不用担心了！","避孕套": "在各种层面都挺有用的！","鸡胸肉冻干(200g)": "给人吃刚刚好",
-        "午餐肉罐头(300g)": "太珍贵了","卫生纸(100抽)": "拿来生火有奇效！","羊毛(500g)": "被雪水浸湿了，晒晒还能用",
-        "锤子": "稍微用力点，应该可以给丧尸开颅吧","冰镐": "攀冰利器，能轻松凿开丧尸头盖骨","工兵铲": "挖雪、劈柴、拍丧尸三不误",
-        "医用酒精喷雾(60ml)": "虽然只有小小一瓶，但用处极大","防风打火机": "在风雪里也能打着","急救包": "里面有碘伏棉片、三角巾和止痛药",
-        "军用雪地帐篷": "四季节帐篷，能抗暴风雪","羽绒睡袋(-40℃)": "军用级羽绒睡袋","雪地伪装服": "白色迷彩罩衣",
-        "狩猎步枪": "栓动式猎枪，配瞄准镜","雪橇犬": "阿拉斯加雪橇犬，能拉雪橇也能警戒"
+        "树枝": "最普通的树枝，路边就捡到了！",
+        "圆木": "表面的水让它们里面有些潮湿，但还勉强可以用",
+        "碎布条": "从路边丢弃的衣服上撕下的布条",
+        "兽骨": "路边随处可见的腐烂的肉堆里捡到的骨头，不知道是什么动物的",
+        "小石子": "最普通的小石子，路边就捡到了！",
+        "石块": "比小石子稍大一些，用来砸人还挺疼的！",
+        "石板": "表面光滑平整，如果有泡面的话应该可以拿来压着吧...",
+        "土豆块茎": "发芽的土豆块茎，虽然不能食用但是适合种植",
+        "小刀": "表面有点生锈，但是还是能勉强使用",
+        "不锈钢勺": "完好地保存到现在了！但是好像一不小心就会掰折",
+        "可食用水(500ml)": "超级珍贵的可以喝的水，好不容易才收集到这么多呢",
+        "铁片(250cm²)": "稍微有点薄，但是没什么锈迹，真神奇啊",
+        "野菜": "虽然不知道是什么菜，但经过你的试验之后，这个可以吃",
+        "铁丝": "不知道从哪里扯下来的一段，弯折几次就会断，但绑东西足够了",
+        "铁钉": "长短不一，锈迹斑斑，但用来加固木板门还算牢靠",
+        "麻绳(3m)": "已经有些毛躁，但承受一个人的重量似乎不成问题",
+        "打火机": "生火的事情就不用担心了！",
+        "避孕套": "在各种层面都挺有用的！",
+        "鸡胸肉冻干(200g)": "给丧尸吃太有营养，给人吃刚刚好",
+        "午餐肉罐头(300g)": "太珍贵了，泡水先吃个三年吧",
+        "卫生纸(100抽)": "拿来生火有奇效！",
+        "羊毛(500g)": "被雪水浸湿了，但是晒晒还能用",
+        "锤子": "稍微用力点，应该可以给丧尸开颅吧",
+        "冰镐": "攀冰用的利器，尖头能轻松凿开丧尸的头盖骨",
+        "工兵铲": "可折叠的军用铲，挖雪、劈柴、拍丧尸三不误",
+        "医用酒精喷雾(60ml)": "虽然只有小小一瓶，但是用处极大",
+        "防风打火机": "在风雪里也能打着，燃料还剩大半罐",
+        "急救包": "里面有碘伏棉片、三角巾和几片止痛药，不过好像过期了",
+        "军用雪地帐篷": "四季节帐篷，双层加厚，能抗暴风雪，内附地钉和防风绳，完好如新",
+        "羽绒睡袋(-40℃)": "军用级羽绒睡袋，压缩后仅足球大小",
+        "雪地伪装服": "白色迷彩罩衣，内衬隔热层，趴在雪地里别人从十米外都看不见你",
+        "狩猎步枪": "栓动式猎枪，配瞄准镜，口径.308，有效射程300米，配子弹×20发",
+        "雪橇犬": "阿拉斯加雪橇犬，受过基本训练，能拉雪橇也能警戒，认主",
+        "空罐头": "边缘很锋利，可以当简易锅，也能做成警报陷阱",
+        "动物脂肪": "味道有些刺鼻，手感也很滑腻，让你有点恶心",
+        "兽皮": "路边动物尸体上剥下来的皮，皮毛有些打结，但能够使用",
+        "生肉": "有些腐烂了，并且味道闻上去有些糟糕，要吃吗？",
+        "松针": "路边的松树掉下来的松针",
+        "雪": "昨晚刚下完一场大雪",
+        "雪砖": "昨晚刚下完一场大雪，这是你辛苦滚雪球按出来的雪砖",
+        "鱼钩": "有些生锈了，差点勾到你的脚底板",
+        "剪刀": "稍微有些钝了，但好在你也不用它来做剪纸艺术",
+        "防切割手套": "大大降低了感染破伤风的可能性",
+        "食盐200g": "比海水的咸度温柔得多，终于可以吃有味道的东西了！",
+        "纱布": "虽然看着有些泛黄，但包扎伤口的时候不会感染了",
+        "手电筒": "照射范围不大，但夜里探索有它应该能更快发现危险来临吧",
+        "脱水蔬菜包": "冻干处理过的蔬菜碎，泡开后勉强能骗自己喝了口膳食搭配的味增汤",
+        "鹿肉干": "硬得像皮带，但刚好锻炼咬肌",
+        "滑雪板": "单板，板底有刮痕，但在雪坡上滑行比走路快三倍",
+        "急救毯": "薄如蝉翼，裹在身上却能快速热起来",
+        "户外净水器": "陶瓷滤芯的手压式净水器，10分钟能过滤500ml水，滤芯大概还能用",
+        "急救箱": "军用规格的急救箱，内有止血粉、缝合针线、吗啡针剂×2、抗生素×10粒",
+        "夜视仪": "单筒头戴式，一代管，有轻微噪点，但在无月光的夜里能看清五十米内的丧尸",
+        "复合弓": "拉力50磅的狩猎弓，配6支碳纤维箭",
+        "十字弩": "手弩，配12支弩箭，有效射程30米，箭可回收",
+        "军用口粮包": "一周份的冻干军粮，含主食、汤包、能量棒和速溶咖啡",
+        "雪地摩托": "小型雪地摩托，油箱半满，能在雪原上跑80公里，但发动机声音会引来丧尸",
+        "玻璃杯": "表面有些裂痕，放水进去会漏一点点呢",
+        "筷子": "居然是不锈钢材质的，这个该怎么用呢...",
+        "桦树皮": "剥落的桦树皮是极好的引火物，撕成细条后一点就着",
+        "松明": "富含松脂的松木段，燃烧时间长，像火炬一样明亮",
+        "干苔藓": "即使在最干燥的日子里也能找到它，塞进衣服里能稍微保暖",
+        "肥皂": "上次洗澡是什么时候了呢...",
+        "JOJA可乐": "好像已经没有气了，不过也不会拿来喝就是了！",
+        "婴儿纸尿裤": "这包纸尿裤的年龄都已经超过婴儿了吧",
+        "卫生巾": "在现在这种情况能找到包装如此完整的实在是很少见",
+        "罐装蜂蜜": "直觉告诉你这个已经不能吃了，但是这可是蜂蜜啊",
+        "《圣经》": "向上帝祈祷的话，可以吃一顿好的吗？",
+        "《假如给我三天光明》": "纸张已经泛黄且脆薄了，但是还能勉强阅读",
+        "《钢铁是怎样炼成的》": "保存得还算完好，书如其名，十分坚韧",
+        "铁锹": "非常趁手的适宜挖土的工具，铁的那一面除了厚厚的锈还有别的一层什么，好臭...",
+        "海绵": "太久没有沾水，已经变硬了",
+        "打火石": "大约是以前居民用于生火的工具",
+        "红薯块根": "外表意外的没有什么损伤，可以拿来种植",
+        "小麦种子": "一部分好像被雪水泡坏了，但春天到了，正好适宜种植",
+        "生锈的弓箭": "需要使用很大力气才能拉动弓弦",
+        "动物粪便250g": "很好的肥料",
+        "生锈的箭矢": "箭头有很严重的锈蚀了，射到人的话会得破伤风吧...",
+        "生锈的钓鱼用具": "居然是一盒完备的钓鱼用具，剩余的使用寿命目测很长",
+        "鸡蛋(不确定好坏)": "要赌赌看吗？",
+        "《母猪的产后护理》": "如果有母猪可以食用就更好了",
+        "白砂糖200g": "颗粒很大，因为受潮所以黏在一起了",
+        "维生素片(30片)": "看包装应该是维生素B族？",
+        "保温饭盒": "不锈钢的，双层真空，装热水能暖到第二天早上",
+        "花楸树苗": "一种观赏树的树苗，果子极酸但维生素C含量高",
+        "啤酒花根茎": "种活了就能酿酒，末日里还有啤酒...是我在做梦吗？",
+        "暖宝宝贴": "保质期早过了，不知道还能不能发热呢",
+        "蜡烛": "已经弯曲变形，但这种光毕竟不用电",
+        "百乐门香烟": "M国品牌的香烟，在废墟超市里翻到的",
+        "针线包": "缝补衣物、缝合伤口、甚至挑出手掌里的木刺",
+        "滑雪手套": "左手，只剩一只，给你来说略有些小",
+        "摩托车电瓶": "不知道还有多少电，这种东西怎么会单独出现在这里？",
+        "《极地生存手册》": "书角有被虫蚀的痕迹......这里不会有蟑螂吧！",
+        "白桦茸": "冻得硬邦邦的一团，煮水喝据说能增强免疫力",
+        "伏特加(半瓶)": "不知道是谁藏在暖气片后面的，特别有用的东西！",
+        "头灯": "解放双手的照明工具，电池还能撑几个晚上",
+        "防寒面罩": "只露出眼睛的抓绒面罩，寒风吹在脸上再也不会像刀割一般",
+        "雪地靴": "内衬羊毛的防水靴，尺码偏大，但塞两层袜子刚好",
+        "补胎工具包": "如果还有车的话，这套工具能让你的爱车多跑几百公里",
+        "军用MRE口粮": "自热袋还能用，加热后居然有肉酱意粉的味道，是幻觉吗？",
+        "地图集": "虽然城市已面目全非，但等高线和河流走向不会变",
+        "伐木锯": "刃口锉过还能用，砍一棵白桦只需要十分钟",
+        "雪地猎网": "用麻绳编的，埋在雪下可以套松鸡或野兔",
+        "桦皮桶": "用桦树皮缝的，轻便且不漏水，比塑料桶耐用",
+        "干鹿筋": "晒干的鹿腿筋，煮软后可以当绳子用，也能熬胶",
+        "雪橇": "小型雪橇，绑上绳子能拖七、八十公斤的物资，比人背省力多了",
+        "烟熏炉": "铁皮焊的简易炉子，有了它肉干应该不会再生蛆了吧！",
+        "磨刀石": "两面粗细不同，砍了十几只丧尸后终于可以磨刀了！",
+        "羊毛毡": "厚实的毡布，裁一裁能做鞋垫或护膝，隔绝寒冷和潮湿",
+        "桦木滑雪杖": "一对，杆身笔直，杖尖包了铁皮，戳丧尸眼睛刚刚好",
+        "野生蓝莓苗": "耐寒的矮丛蓝莓，夏天能收一小捧果子",
+        "蔓越莓枝条": "匍匐生长的莓果枝条，插在湿地里应该就能活下来",
+        "云莓种子": "亚寒带特有的金色莓果，极其珍贵",
+        "越橘苗": "常绿的小灌木，冬天也能看到绿叶，果子酸甜耐储存",
+        "黄花菜根茎": "萱草的根茎，种下后能收花蕾晒干，炖汤时放几朵就是人间美味",
+        "《雪地追踪》": "看样子好像是手写的笔记，上面写了怎么从雪地上的脚印判断是人还是丧尸",
+        "芡实种子": "睡莲科的种子，种在静水里能收芡实米，煮粥有淡淡的清香",
+        "水芹种子": "长在水边的野菜种子，种在浅水区冬天也能收绿叶菜",
+        "湖鳟": "体型巨大，拉上来时鱼线都在尖叫",
+        "白斑狗鱼": "北欧湖泊里常见的大家伙，牙齿像针一样密，取钩时要万分小心",
+        "北极嘉鱼": "阿拉斯加风格的冷水鱼，肉质粉红，油脂丰富得像三文鱼",
+        "江鳕": "肝占体重的十分之一，据说煮汤能治夜盲症",
+        "大西洋鲱鱼": "一网居然能捞上来一小群，腌着大概能吃一冬天吧！",
+        "红点鲑": "冰岛风格的溪流鱼，鳞片细密，鱼肉是淡粉色的",
+        "大西洋鳕鱼": "挪威海钓的经典渔获，雪白的鱼肉紧实弹牙",
+        "梭鱼": "牙齿锋利得像玻璃渣，取钩时差点被咬到，肉倒是紧实弹牙",
+        "白鲑群": "一网捞上来四条，银光闪闪地在冰面上蹦跶",
+        "海豹幼崽": "冰面上遇到的走散幼崽，不忍心下手，但它的脂肪层让旁边的人都馋了",
+        "巨型湖鳟": "超过一米长的湖鳟，够吃一周",
+        "北极红点鲑王": "极其稀有的巨型红点鲑，鱼肉呈深红色，油脂丰富得像三文鱼",
+        "大西洋比目鱼": "扁平如盘的巨型比目鱼，重达15公斤，肉质洁白细嫩",
+        "帝王蟹群": "在冰面下放的陷阱里抓到三只帝王蟹，一只就够吃两天",
+        "鲱鱼群×20": "一网捞上来二十多条大西洋鲱鱼，腌制成罐能吃一整个冬天",
+        "江鳕王": "超过五公斤的江鳕，肝脏有拳头大小，是维生素A的超级来源",
+        "海豹脂肪(5kg)": "在冰面上发现海豹尸体，油脂层有手掌厚，炼油后能点灯、防冻疮、增加食物热量",
+        "水貂": "捕兽笼里抓到的水貂，皮毛完整，剥下来能做冬帽或换物资"
     };
-    function getItemDescription(name) { return ITEM_DESCRIPTIONS[name] || "废土中寻到的普通物件。"; }
+    function getItemDescription(name) { return ITEM_DESCRIPTIONS[name] || "废土中寻到的普通物件，或许有它独特的用途。"; }
 
+    // 合成配方描述
     const RECIPE_DESCRIPTIONS = {
-        "简易冰镐": "可用于攀爬冰壁、凿开冰层、近战攻击。","骨制匕首": "轻型近战武器，攻击速度快。","钉刺球棒": "中型近战武器。",
-        "燃烧瓶": "投掷武器，造成范围火焰伤害。","简易睡袋": "保暖用品，抵御-10℃寒冷。","堆肥箱": "设施，将厨余转化为肥料。",
-        "简易陷阱": "狩猎/防御设施，捕捉小型动物或绊倒丧尸。"
+        "简易冰镐": "可用于攀爬冰壁、凿开冰层、近战攻击。把铁片磨尖绑在木棍上，虽然长得丑但还是能用的。",
+        "骨制匕首": "轻型近战武器，攻击速度快。用兽骨磨出刃口，缠上布条当柄，比小刀好用。",
+        "钉刺球棒": "中型近战武器，攻击力提升。把铁钉敲进圆木削成的木棍里，打丧尸脑袋一棍一个洞。",
+        "铁皮盾牌": "防具，格挡丧尸攻击。把几块铁皮绑在一起，虽然丑但能保命。",
+        "简易弓箭": "远程武器，射程20米。弯树枝做弓，铁片磨尖当箭头，射不准但总比没有强。",
+        "雪地鞋套": "防具，在雪地里移动不会陷落。绑在鞋底的简易防滑齿，在冰面上走稳当多了。",
+        "燃烧瓶": "投掷武器，造成范围火焰伤害。点燃后扔出去，火焰能烧死一片，但别烧到自己。",
+        "油灯": "照明工具，燃烧6小时。玻璃杯里装动物油，布条当灯芯，能照亮半个屋子。",
+        "柴火炉": "炊具/取暖设备，热效率提升。几块铁皮拼的炉子，烧柴不浪费热量，还能煮饭。",
+        "保温水壶套": "保温用品，热水保温6小时。给水壶穿件羊毛外套，冬天能喝上温水。",
+        "皮草护腿": "防具/保暖，腿部保暖+防咬。兽皮裁的护腿，丧尸咬不穿，风也吹不透。",
+        "简易睡袋": "保暖用品，抵御-10℃寒冷。用羊毛和碎布缝的袋子，钻进去睡比躺地上强十倍。",
+        "骨针": "医疗用品，缝合伤口。兽骨磨针，缝伤口比用铁丝强。",
+        "野菜肉汤": "食物，恢复体力+预防坏血病。有肉有菜有热水，这顿是末日里的满汉全席。",
+        "维生素茶": "饮品，补充维生素C。松针煮水，又苦又涩但能防坏血病。",
+        "晾肉架": "设施，风干肉类。搭个架子挂肉，风吹几天就成肉干了。",
+        "堆肥箱": "设施，将厨余转化为肥料。木板钉的箱子，烂菜叶子倒进去几个月就是好肥料。",
+        "雪地掩体": "临时隐蔽所，降低被发现概率。树枝搭架子盖上雪，趴在里面对付一晚。",
+        "简易雪屋": "临时庇护所，抵御风雪。切雪块垒成圆顶屋，比帐篷暖和一些（需在有积雪区域）。",
+        "简易木头房": "临时庇护所，抵御风雪。虽然有些漏风，但比雪屋坚硬许多，也可拆卸运走。",
+        "简易陷阱": "狩猎/防御设施，捕捉小型动物或绊倒丧尸。用树枝和铁丝做的触发陷阱，放对了地方能抓到小动物。",
+        "冰钓套组": "钓鱼工具，冰钓专用。铁钉磨成鱼钩，麻绳当线，在冰面上凿个洞就能钓鱼。",
+        "雪橇": "载具，雪地运输100kg物资。木板拼的雪橇，绑上绳子拖着走，比背着省力些，但很重。",
+        "伪装网": "隐蔽用品，遮盖物资或掩体。布条编成网，盖上树枝和雪，藏什么都看不出来。",
+        "报警陷阱": "防御设施，发出声响警报。罐头穿起来挂在必经之路上，丧尸碰到会叮当响。"
     };
     function getRecipeDescription(target) { return RECIPE_DESCRIPTIONS[target] || "废土手工艺，凝聚生存智慧。"; }
 
+    // =============================================================
+    // 物资池
+    // =============================================================
     const TIER_3_ITEMS = [
         {name:"树枝",amount:6},{name:"圆木",amount:6},{name:"碎布条",amount:10},{name:"兽骨",amount:5},{name:"小石子",amount:10},
         {name:"石块",amount:5},{name:"石板",amount:3},{name:"土豆块茎",amount:10},{name:"小刀",amount:1},{name:"玻璃杯",amount:1},
         {name:"可食用水(500ml)",amount:1},{name:"铁片(250cm²)",amount:1},{name:"野菜",amount:5},{name:"铁丝",amount:1},{name:"铁钉",amount:10},
-        {name:"麻绳(3m)",amount:1},{name:"空罐头盒",amount:1},{name:"打火机",amount:1},{name:"避孕套",amount:1},{name:"鸡胸肉冻干(200g)",amount:2},
-        {name:"午餐肉罐头(300g)",amount:2},{name:"卫生纸(100抽)",amount:1},{name:"羊毛(500g)",amount:1}
+        {name:"麻绳(3m)",amount:1},{name:"打火机",amount:1},{name:"避孕套",amount:1},{name:"鸡胸肉冻干(200g)",amount:2},
+        {name:"午餐肉罐头(300g)",amount:2},{name:"卫生纸(100抽)",amount:1},{name:"羊毛(500g)",amount:1},
+        {name:"空罐头",amount:1},{name:"动物脂肪",amount:1},{name:"兽皮",amount:1},{name:"生肉",amount:1},
+        {name:"松针",amount:10},{name:"雪",amount:5},{name:"雪砖",amount:3},{name:"鱼钩",amount:1}
     ];
     const TIER_4_ITEMS = [
         {name:"锤子",amount:1},{name:"防切割手套",amount:1},{name:"食盐200g",amount:1},{name:"纱布",amount:1},{name:"手电筒",amount:1},
         {name:"工兵铲",amount:1},{name:"冰镐",amount:1},{name:"医用酒精喷雾(60ml)",amount:1},{name:"防风打火机",amount:1},{name:"急救包",amount:1},
-        {name:"脱水蔬菜包",amount:3},{name:"鹿肉干",amount:1},{name:"滑雪板",amount:1},{name:"急救毯",amount:1}
+        {name:"脱水蔬菜包",amount:3},{name:"鹿肉干",amount:1},{name:"滑雪板",amount:1},{name:"急救毯",amount:1},{name:"剪刀",amount:1}
     ];
     const TIER_5_ITEMS = [
         {name:"军用雪地帐篷",amount:1},{name:"羽绒睡袋(-40℃)",amount:1},{name:"便携柴火炉",amount:1},{name:"雪地伪装服",amount:1},
         {name:"户外净水器",amount:1},{name:"急救箱",amount:1},{name:"夜视仪",amount:1},{name:"复合弓",amount:1},{name:"十字弩",amount:1},
         {name:"军用口粮包",amount:1},{name:"狩猎步枪",amount:1},{name:"雪地摩托",amount:1},{name:"雪橇犬",amount:2}
     ];
+
     const BASE_INVENTORY = [
         {name:"树枝",amount:6},{name:"圆木",amount:6},{name:"碎布条",amount:10},{name:"兽骨",amount:5},{name:"小石子",amount:10},
         {name:"石块",amount:5},{name:"石板",amount:3},{name:"土豆块茎",amount:10},{name:"小刀",amount:1},{name:"不锈钢勺",amount:1},
         {name:"可食用水(500ml)",amount:1},{name:"铁片(250cm²)",amount:1},{name:"野菜",amount:5},{name:"铁丝",amount:1},{name:"铁钉",amount:10},
         {name:"麻绳(3m)",amount:1}
     ];
+
+    // 完整合成配方
     const RECIPES = [
-        {name:"简易冰镐",target:"简易冰镐",targetAmount:1,requireTool:null,costs:[{name:"铁片(250cm²)",qty:1},{name:"圆木",qty:1},{name:"麻绳(3m)",qty:1}]},
-        {name:"骨制匕首",target:"骨制匕首",targetAmount:1,requireTool:"小刀",costs:[{name:"兽骨",qty:1},{name:"碎布条",qty:1}]},
-        {name:"钉刺球棒",target:"钉刺球棒",targetAmount:1,requireTool:null,costs:[{name:"圆木",qty:1},{name:"铁钉",qty:10},{name:"铁丝",qty:1}]},
-        {name:"燃烧瓶",target:"燃烧瓶",targetAmount:1,requireTool:null,costs:[{name:"玻璃杯",qty:1},{name:"医用酒精喷雾(60ml)",qty:1},{name:"碎布条",qty:1}]},
-        {name:"简易睡袋",target:"简易睡袋",targetAmount:1,requireTool:null,costs:[{name:"羊毛(500g)",qty:2},{name:"碎布条",qty:5},{name:"麻绳(3m)",qty:1}]},
-        {name:"堆肥箱",target:"堆肥箱",targetAmount:1,requireTool:null,costs:[{name:"圆木",qty:6},{name:"铁钉",qty:10},{name:"石板",qty:1}]},
-        {name:"简易陷阱×2",target:"简易陷阱",targetAmount:2,requireTool:null,costs:[{name:"铁丝",qty:2},{name:"树枝",qty:3},{name:"麻绳(3m)",qty:1}]}
+        {name:"简易冰镐", target:"简易冰镐", targetAmount:1, requireTool:null, costs:[{name:"铁片(250cm²)",qty:1},{name:"圆木",qty:1},{name:"麻绳(3m)",qty:1}]},
+        {name:"骨制匕首", target:"骨制匕首", targetAmount:1, requireTool:"小刀", costs:[{name:"兽骨",qty:1},{name:"碎布条",qty:1}]},
+        {name:"钉刺球棒", target:"钉刺球棒", targetAmount:1, requireTool:null, costs:[{name:"圆木",qty:1},{name:"铁钉",qty:10},{name:"铁丝",qty:1}]},
+        {name:"铁皮盾牌", target:"铁皮盾牌", targetAmount:1, requireTool:null, costs:[{name:"铁片(250cm²)",qty:3},{name:"铁丝",qty:2},{name:"麻绳(3m)",qty:2}]},
+        {name:"简易弓箭", target:"简易弓箭", targetAmount:1, requireTool:null, costs:[{name:"树枝",qty:3},{name:"麻绳(3m)",qty:1},{name:"铁片(250cm²)",qty:1}]},
+        {name:"雪地鞋套", target:"雪地鞋套", targetAmount:1, requireTool:null, costs:[{name:"铁丝",qty:2},{name:"碎布条",qty:2},{name:"铁钉",qty:5}]},
+        {name:"燃烧瓶", target:"燃烧瓶", targetAmount:1, requireTool:null, costs:[{name:"玻璃杯",qty:1},{name:"医用酒精喷雾(60ml)",qty:1},{name:"碎布条",qty:1}]},
+        {name:"油灯", target:"油灯", targetAmount:1, requireTool:null, costs:[{name:"玻璃杯",qty:1},{name:"动物脂肪",qty:1},{name:"碎布条",qty:1}]},
+        {name:"柴火炉", target:"柴火炉", targetAmount:1, requireTool:null, costs:[{name:"铁片(250cm²)",qty:4},{name:"铁丝",qty:3},{name:"石板",qty:1}]},
+        {name:"保温水壶套", target:"保温水壶套", targetAmount:1, requireTool:null, costs:[{name:"羊毛(500g)",qty:1},{name:"碎布条",qty:2}]},
+        {name:"皮草护腿", target:"皮草护腿", targetAmount:1, requireTool:null, costs:[{name:"兽皮",qty:1},{name:"麻绳(3m)",qty:1},{name:"剪刀",qty:1}]},
+        {name:"简易睡袋", target:"简易睡袋", targetAmount:1, requireTool:null, costs:[{name:"羊毛(500g)",qty:2},{name:"碎布条",qty:5},{name:"麻绳(3m)",qty:1}]},
+        {name:"骨针", target:"骨针", targetAmount:1, requireTool:null, costs:[{name:"兽骨",qty:1}]},
+        {name:"野菜肉汤", target:"野菜肉汤", targetAmount:1, requireTool:null, costs:[{name:"生肉",qty:1},{name:"野菜",qty:1},{name:"可食用水(500ml)",qty:1}]},
+        {name:"维生素茶", target:"维生素茶", targetAmount:3, requireTool:null, costs:[{name:"松针",qty:10},{name:"可食用水(500ml)",qty:1}]},
+        {name:"晾肉架", target:"晾肉架", targetAmount:1, requireTool:null, costs:[{name:"圆木",qty:4},{name:"麻绳(3m)",qty:2},{name:"铁丝",qty:1}]},
+        {name:"堆肥箱", target:"堆肥箱", targetAmount:1, requireTool:null, costs:[{name:"圆木",qty:6},{name:"铁钉",qty:10},{name:"石板",qty:1}]},
+        {name:"雪地掩体", target:"雪地掩体", targetAmount:1, requireTool:null, costs:[{name:"树枝",qty:10},{name:"雪",qty:1},{name:"碎布条",qty:5}]},
+        {name:"简易雪屋", target:"简易雪屋", targetAmount:1, requireTool:"冰镐", costs:[{name:"雪砖",qty:20}]},
+        {name:"简易木头房", target:"简易木头房", targetAmount:1, requireTool:null, costs:[{name:"圆木",qty:12},{name:"树枝",qty:6},{name:"麻绳(3m)",qty:2},{name:"铁丝",qty:1},{name:"碎布条",qty:5}]},
+        {name:"简易陷阱×2", target:"简易陷阱", targetAmount:2, requireTool:null, costs:[{name:"铁丝",qty:2},{name:"树枝",qty:3},{name:"麻绳(3m)",qty:1}]},
+        {name:"冰钓套组", target:"冰钓套组", targetAmount:1, requireTool:null, costs:[{name:"鱼钩",qty:1},{name:"麻绳(3m)",qty:2},{name:"铁钉",qty:1}]},
+        {name:"雪橇", target:"雪橇", targetAmount:1, requireTool:null, costs:[{name:"圆木",qty:4},{name:"铁片(250cm²)",qty:2},{name:"麻绳(3m)",qty:3}]},
+        {name:"伪装网", target:"伪装网", targetAmount:1, requireTool:null, costs:[{name:"碎布条",qty:10},{name:"麻绳(3m)",qty:2}]},
+        {name:"报警陷阱", target:"报警陷阱", targetAmount:1, requireTool:null, costs:[{name:"空罐头",qty:3},{name:"铁丝",qty:1},{name:"麻绳(3m)",qty:1}]}
     ];
 
+    // =============================================================
     // 辅助函数
+    // =============================================================
     function getRandomItemByTier(tier) {
         let pool = tier===3?TIER_3_ITEMS:(tier===4?TIER_4_ITEMS:TIER_5_ITEMS);
         if(!pool.length) return {name:"残羹剩饭",amount:1};
@@ -171,9 +347,11 @@
         return false;
     }
 
+    // =============================================================
     // 存储系统
-    const STORAGE_KEY="EmberLong_users_v5";
-    let teamsStore = {}; // teamId -> { id, members: [], publicInventory: [], pendingQuitRequests: [] }
+    // =============================================================
+    const STORAGE_KEY="EmberLong_users_final";
+    let teamsStore = {};
     function loadUsers() {
         const raw=localStorage.getItem(STORAGE_KEY);
         if(raw) return JSON.parse(raw);
@@ -187,15 +365,16 @@
         teamsStore={};
         for(const u of users) {
             if(u.teamId && !teamsStore[u.teamId]) {
-                teamsStore[u.teamId]={id:u.teamId,members:[],publicInventory:[],pendingQuitRequests:[]};
+                const teamData = u.teamData || {};
+                teamsStore[u.teamId]={id:u.teamId, members:[], publicInventory:[], pendingQuitRequests:[], key: teamData.key || ""};
             }
         }
         for(const u of users) {
             if(u.teamId && teamsStore[u.teamId]) {
                 teamsStore[u.teamId].members.push(u.username);
+                if(u.teamData && u.teamData.key) teamsStore[u.teamId].key = u.teamData.key;
             }
         }
-        // 公共库存从所有共享成员的个人库存汇总，并清空共享成员的库存
         for(const tid in teamsStore) {
             const team=teamsStore[tid];
             team.publicInventory=[];
@@ -209,30 +388,25 @@
                 su.inventory=[];
             }
         }
-        // 写回用户数据
         for(const u of users) {
             if(u.teamId && u.isSharing) u.inventory=[];
         }
         saveUsersRaw(users);
     }
     function saveUsersRaw(users) { localStorage.setItem(STORAGE_KEY,JSON.stringify(users)); }
-    function updateUserInStorage(updatedUser) {
-        const users=loadUsers();
-        const idx=users.findIndex(u=>u.username===updatedUser.username);
-        if(idx!==-1) users[idx]=updatedUser;
-        saveUsers(users);
-    }
 
     let currentUser=null;
     let currentTeam=null;
 
+    // =============================================================
+    // 渲染
+    // =============================================================
     function render() {
         const app=document.getElementById("app");
         if(!currentUser) renderLoginRegister(app);
         else renderDashboard(app);
     }
 
-    // 登录注册
     function renderLoginRegister(container) {
         container.innerHTML=`
             <div class="header"><h1>🔥 余烬长明</h1><p>废土幸存者物资档案</p></div>
@@ -260,6 +434,8 @@
             if(user) {
                 if(!user.usedPasswords) user.usedPasswords=[];
                 if(!user.contribution) user.contribution=[];
+                if(!user.friends) user.friends=[];
+                if(!user.teamData) user.teamData={};
                 checkAndResetFreeSearches(user);
                 currentUser=user;
                 if(currentUser.teamId) currentTeam=teamsStore[currentUser.teamId];
@@ -282,7 +458,7 @@
             if(users.find(u=>u.username===username)){alert("账号已存在");return;}
             const inventory=JSON.parse(JSON.stringify(BASE_INVENTORY));
             const stats={strength:str,speed:spd,intelligence:int,inspiration:ins,luck:luck};
-            const newUser={username,password:pwd,survivorName:name,stats,inventory,freeSearches:2,lastFreeReset:getBeijingDate(),usedPasswords:[],teamId:null,isSharing:false,contribution:[]};
+            const newUser={username,password:pwd,survivorName:name,stats,inventory,freeSearches:2,lastFreeReset:getBeijingDate(),usedPasswords:[],teamId:null,isSharing:false,contribution:[],friends:[],teamData:{}};
             users.push(newUser);
             saveUsers(users);
             currentUser=newUser;
@@ -290,7 +466,6 @@
         }
     }
 
-    // 主面板
     function renderDashboard(container) {
         const stats=currentUser.stats;
         const freeLeft=currentUser.freeSearches;
@@ -300,9 +475,10 @@
             <div class="search-panel"><div class="badge">✨ 今日免费搜寻: ${freeLeft} 次</div><button id="free-search-btn">🔍 免费搜寻</button><div class="input-group"><label>物资密码</label><input id="password-input"></div><button id="pwd-search-btn">🔐 密码搜寻</button></div></div>
             <div class="card"><h2>📦 随身物资 <span style="font-size:0.7rem;">(点击名称查看描述)</span></h2><div id="inventory-list" class="inventory-grid"></div></div>
             <div class="card"><h2>🤝 小队系统</h2><div id="team-panel"></div></div>
+            <div class="card"><h2>👥 好友系统</h2><div id="friend-panel"></div></div>
             <div class="card"><h2>🎁 物资赠予</h2><div class="search-panel"><div class="input-group"><label>接收者用户名</label><input id="gift-target"></div><button id="gift-search-btn">🔎 查找用户</button></div><div id="gift-result"></div></div>
             <div class="card"><h2>⚒️ 废土工坊 · 合成</h2><div class="recipe-list" id="recipe-list"></div><div id="craft-msg" class="alert"></div></div>
-            <footer>⚠️ 每日0点(北京时间)重置免费搜寻次数至1次，初始额外赠送2次。每个密码每个幸存者限用一次。</footer>`;
+            <footer>⚠️ 每日0点(北京时间)重置免费搜寻次数至1次，初始额外赠送2次。每次搜寻可获得3个物资。小队密钥可用于加入队伍。</footer>`;
         document.getElementById("logout-btn").onclick=()=>{currentUser=null;render();};
         document.getElementById("free-search-btn").onclick=performFreeSearch;
         document.getElementById("pwd-search-btn").onclick=()=>{const pwd=document.getElementById("password-input").value.trim();if(pwd)performPasswordSearch(pwd);else showMsg("请输入密码","#craft-msg");};
@@ -310,6 +486,7 @@
         refreshInventoryDisplay();
         renderRecipes();
         renderTeamPanel();
+        renderFriendPanel();
     }
 
     function refreshInventoryDisplay() {
@@ -325,16 +502,23 @@
     function performFreeSearch() {
         checkAndResetFreeSearches(currentUser);
         if(currentUser.freeSearches<=0){showMsg("今日免费次数已用完","#craft-msg");return;}
-        const loot=performLoot(currentUser.stats.intelligence,currentUser.stats.inspiration,currentUser.stats.luck);
-        if(currentUser.teamId && currentUser.isSharing && currentTeam) {
-            addToPublicAndContribution(currentTeam,loot);
-        } else {
-            currentUser.inventory.push(loot);
-            currentUser.inventory=mergeInventory(currentUser.inventory);
+        const stats=currentUser.stats;
+        const loots=[];
+        for(let i=0;i<3;i++){
+            loots.push(performLoot(stats.intelligence,stats.inspiration,stats.luck));
+        }
+        alert("🔍 搜寻获得：\n" + loots.map(l => `${l.name} x${l.amount}`).join("\n"));
+        for(const loot of loots){
+            if(currentUser.teamId && currentUser.isSharing && currentTeam) {
+                addToPublicAndContribution(currentTeam,loot);
+            } else {
+                currentUser.inventory.push(loot);
+                currentUser.inventory=mergeInventory(currentUser.inventory);
+            }
         }
         currentUser.freeSearches--;
         updateUserAndTeam();
-        showMsg(`🔍 获得 ${loot.name} x${loot.amount}`,"#craft-msg");
+        showMsg(`获得 ${loots.length} 个物资`,"#craft-msg");
         refreshInventoryDisplay();
         renderTeamPanel();
     }
@@ -343,16 +527,23 @@
         const valid=Array.from({length:50},(_,i)=>(1001+i).toString());
         if(!valid.includes(pwd)){showMsg("密码错误","#craft-msg");return;}
         if(currentUser.usedPasswords.includes(pwd)){showMsg(`密码 ${pwd} 已使用过`,"#craft-msg");return;}
-        const loot=performLoot(currentUser.stats.intelligence,currentUser.stats.inspiration,currentUser.stats.luck);
-        if(currentUser.teamId && currentUser.isSharing && currentTeam) {
-            addToPublicAndContribution(currentTeam,loot);
-        } else {
-            currentUser.inventory.push(loot);
-            currentUser.inventory=mergeInventory(currentUser.inventory);
+        const stats=currentUser.stats;
+        const loots=[];
+        for(let i=0;i<3;i++){
+            loots.push(performLoot(stats.intelligence,stats.inspiration,stats.luck));
+        }
+        alert("🔐 密码搜寻获得：\n" + loots.map(l => `${l.name} x${l.amount}`).join("\n"));
+        for(const loot of loots){
+            if(currentUser.teamId && currentUser.isSharing && currentTeam) {
+                addToPublicAndContribution(currentTeam,loot);
+            } else {
+                currentUser.inventory.push(loot);
+                currentUser.inventory=mergeInventory(currentUser.inventory);
+            }
         }
         currentUser.usedPasswords.push(pwd);
         updateUserAndTeam();
-        showMsg(`🔐 获得 ${loot.name} x${loot.amount}`,"#craft-msg");
+        showMsg(`获得 ${loots.length} 个物资`,"#craft-msg");
         refreshInventoryDisplay();
         renderTeamPanel();
     }
@@ -366,13 +557,16 @@
         else currentUser.contribution.push({name:item.name,amount:item.amount});
     }
 
+    // 小队系统
     function renderTeamPanel() {
         const panel=document.getElementById("team-panel");
         if(!panel) return;
         if(!currentUser.teamId) {
-            panel.innerHTML=`<div class="flex-between"><span>未加入任何小队</span><div><div class="input-group"><input id="invite-username" placeholder="用户名"></div><button id="create-team-btn">创建小队</button><button id="invite-btn">邀请加入</button></div></div>`;
+            panel.innerHTML=`<div class="flex-between"><span>未加入任何小队</span><div><div class="input-group"><input id="invite-username" placeholder="用户名"></div><button id="create-team-btn">创建小队</button><button id="invite-btn">邀请加入</button></div></div>
+            <div class="search-panel"><div class="input-group"><label>小队密钥</label><input id="join-key-input" placeholder="输入小队密钥"></div><button id="join-by-key-btn">密钥加入</button></div>`;
             document.getElementById("create-team-btn")?.addEventListener("click",createTeam);
             document.getElementById("invite-btn")?.addEventListener("click",()=>sendInvite(document.getElementById("invite-username").value.trim()));
+            document.getElementById("join-by-key-btn")?.addEventListener("click",()=>{const key=document.getElementById("join-key-input").value.trim();if(key)joinTeamByKey(key);else showMsg("请输入密钥","#craft-msg");});
             return;
         }
         const team=teamsStore[currentUser.teamId];
@@ -393,7 +587,11 @@
                 pendingHtml+=`<div class="vote-request"><strong>${req.username}</strong> 请求带走: ${itemsStr}<br>同意票: ${req.votes.length}/${team.members.length}${voted?" (已投票)":` <button class="vote-yes" data-idx="${idx}">同意</button>`}</div>`;
             });
         }
-        panel.innerHTML=`<h3>小队成员</h3><div class="member-list">${membersHtml}</div><div class="flex-between"><div class="input-group"><input id="invite-new" placeholder="邀请用户名"></div><button id="invite-member-btn">邀请加入</button></div>${currentUser.isSharing?`<div><strong>小队公共仓库</strong><div id="team-inventory" class="inventory-grid" style="max-height:200px;"></div></div>`:""}${pendingHtml}`;
+        panel.innerHTML=`<div><strong>小队密钥：</strong><span class="team-key">${team.key || "未设置"}</span></div>
+        <h3>小队成员</h3><div class="member-list">${membersHtml}</div>
+        <div class="flex-between"><div class="input-group"><input id="invite-new" placeholder="邀请用户名"></div><button id="invite-member-btn">邀请加入</button></div>
+        ${currentUser.isSharing?`<div><strong>小队公共仓库</strong><div id="team-inventory" class="inventory-grid" style="max-height:200px;"></div></div>`:""}
+        ${pendingHtml}`;
         document.getElementById("toggle-share-btn")?.addEventListener("click",toggleShare);
         document.getElementById("quit-team-btn")?.addEventListener("click",startQuit);
         document.getElementById("invite-member-btn")?.addEventListener("click",()=>sendInvite(document.getElementById("invite-new").value.trim()));
@@ -407,12 +605,8 @@
                 const req=team.pendingQuitRequests[idx];
                 if(req && !req.votes.includes(currentUser.username)){
                     req.votes.push(currentUser.username);
-                    if(req.votes.length > team.members.length/2){
-                        executeQuit(req.username);
-                    } else {
-                        updateUserAndTeam();
-                        renderTeamPanel();
-                    }
+                    if(req.votes.length > team.members.length/2) executeQuit(req.username);
+                    else { updateUserAndTeam(); renderTeamPanel(); }
                 }
             });
         });
@@ -421,14 +615,31 @@
     function createTeam() {
         if(currentUser.teamId){showMsg("已在小队中","#craft-msg");return;}
         const teamId="team_"+Date.now()+"_"+Math.random().toString(36);
-        const newTeam={id:teamId,members:[currentUser.username],publicInventory:[],pendingQuitRequests:[]};
+        const teamKey = Math.random().toString(36).substring(2,8).toUpperCase();
+        const newTeam={id:teamId, members:[currentUser.username], publicInventory:[], pendingQuitRequests:[], key: teamKey};
         teamsStore[teamId]=newTeam;
         currentUser.teamId=teamId;
         currentUser.isSharing=false;
         currentUser.contribution=[];
+        currentUser.teamData = { key: teamKey };
         updateUserAndTeam();
         renderDashboard(document.getElementById("app"));
-        showMsg("小队创建成功","#craft-msg");
+        showMsg(`小队创建成功！密钥：${teamKey}，可分享给其他玩家加入。`,"#craft-msg");
+    }
+
+    function joinTeamByKey(key) {
+        if(currentUser.teamId){showMsg("你已在小队中，请先退出当前小队","#craft-msg");return;}
+        let targetTeam = null;
+        for(const tid in teamsStore) if(teamsStore[tid].key === key) { targetTeam = teamsStore[tid]; break; }
+        if(!targetTeam){showMsg("无效的小队密钥","#craft-msg");return;}
+        targetTeam.members.push(currentUser.username);
+        currentUser.teamId = targetTeam.id;
+        currentUser.isSharing = false;
+        currentUser.contribution = [];
+        currentUser.teamData = { key: targetTeam.key };
+        updateUserAndTeam();
+        renderDashboard(document.getElementById("app"));
+        showMsg(`成功加入小队！`,"#craft-msg");
     }
 
     function sendInvite(targetName) {
@@ -445,6 +656,7 @@
         target.teamId=currentUser.teamId;
         target.isSharing=false;
         target.contribution=[];
+        target.teamData = { key: team.key };
         saveUsers(users);
         rebuildTeamsFromUsers(loadUsers());
         currentTeam=teamsStore[currentUser.teamId];
@@ -457,9 +669,7 @@
         const team=teamsStore[currentUser.teamId];
         if(!team) return;
         if(!currentUser.isSharing) {
-            for(const item of currentUser.inventory) {
-                addToPublicAndContribution(team,item);
-            }
+            for(const item of currentUser.inventory) addToPublicAndContribution(team,item);
             currentUser.inventory=[];
             currentUser.isSharing=true;
         } else {
@@ -485,7 +695,6 @@
             return;
         }
         let modal=document.createElement("div");
-        modal.id="quit-modal";
         modal.style.position="fixed";modal.style.top="50%";modal.style.left="50%";modal.style.transform="translate(-50%,-50%)";
         modal.style.background="#1b2329";modal.style.padding="20px";modal.style.borderRadius="28px";modal.style.zIndex=1000;modal.style.width="400px";
         let options=contribution.map(c=>`<div><label>${c.name} (最多 ${c.amount})</label><input type="number" min="0" max="${c.amount}" data-name="${c.name}" value="0" class="quit-qty"></div>`).join("");
@@ -504,10 +713,7 @@
                     items.push({name,amount:qty});
                 }
             });
-            if(items.length===0){
-                alert("请至少选择一件物资");
-                return;
-            }
+            if(items.length===0){ alert("请至少选择一件物资"); return; }
             let valid=true;
             for(const it of items){
                 const contrib=contribution.find(c=>c.name===it.name);
@@ -553,6 +759,7 @@
         team.members=team.members.filter(m=>m!==username);
         user.teamId=null;
         user.isSharing=false;
+        user.teamData={};
         if(team.pendingQuitRequests) team.pendingQuitRequests=team.pendingQuitRequests.filter(r=>r.username!==username);
         if(team.members.length===0) delete teamsStore[team.id];
         saveUsers(users);
@@ -566,6 +773,63 @@
         showMsg(`${username} 已退出小队`,"#craft-msg");
     }
 
+    // 好友系统
+    function renderFriendPanel() {
+        const panel=document.getElementById("friend-panel");
+        if(!panel) return;
+        const friends = currentUser.friends || [];
+        panel.innerHTML = `
+            <div class="search-panel">
+                <div class="input-group"><label>搜索用户名</label><input id="search-friend-name" placeholder="用户名"></div>
+                <button id="add-friend-btn">➕ 加为好友</button>
+            </div>
+            <h3>好友列表</h3>
+            <div class="friend-list" id="friend-list"></div>
+        `;
+        document.getElementById("add-friend-btn")?.addEventListener("click",()=>{
+            const targetName = document.getElementById("search-friend-name").value.trim();
+            if(!targetName){showMsg("请输入用户名","#craft-msg");return;}
+            if(targetName === currentUser.username){showMsg("不能添加自己为好友","#craft-msg");return;}
+            const users=loadUsers();
+            const target = users.find(u=>u.username===targetName);
+            if(!target){showMsg("用户不存在","#craft-msg");return;}
+            if(currentUser.friends.includes(targetName)){showMsg("已经是好友了","#craft-msg");return;}
+            currentUser.friends.push(targetName);
+            if(!target.friends) target.friends=[];
+            if(!target.friends.includes(currentUser.username)) target.friends.push(currentUser.username);
+            saveUsers(users);
+            showMsg(`成功添加 ${targetName} 为好友`,"#craft-msg");
+            renderFriendPanel();
+        });
+        const friendDiv = document.getElementById("friend-list");
+        if(friends.length===0){ friendDiv.innerHTML = "<div>暂无好友，快去添加吧！</div>"; return; }
+        friendDiv.innerHTML = friends.map(friendName => {
+            return `<div class="friend-item">
+                        <span>${friendName}</span>
+                        <div style="display:flex; gap:6px;">
+                            <button class="friend-invite" data-name="${friendName}">📨 邀请入队</button>
+                            <button class="friend-gift" data-name="${friendName}">🎁 赠送物资</button>
+                        </div>
+                    </div>`;
+        }).join("");
+        document.querySelectorAll(".friend-invite").forEach(btn=>{
+            btn.addEventListener("click",()=>{
+                const friend = btn.dataset.name;
+                if(!currentUser.teamId){showMsg("请先创建或加入一个小队","#craft-msg");return;}
+                sendInvite(friend);
+            });
+        });
+        document.querySelectorAll(".friend-gift").forEach(btn=>{
+            btn.addEventListener("click",()=>{
+                const friend = btn.dataset.name;
+                const targetInput = document.getElementById("gift-target");
+                if(targetInput) targetInput.value = friend;
+                showGiftPanel();
+            });
+        });
+    }
+
+    // 赠予系统
     function showGiftPanel() {
         const targetName=document.getElementById("gift-target").value.trim();
         if(!targetName){showMsg("请输入用户名","#craft-msg");return;}
@@ -624,27 +888,40 @@
         document.getElementById("close-gift").onclick=()=>{modal.remove();overlay.remove();};
     }
 
+    // 合成工坊
+    function renderRecipes() {
+        const div=document.getElementById("recipe-list");
+        if(!div) return;
+        let inv;
+        if(currentUser.teamId && currentUser.isSharing && currentTeam) inv=currentTeam.publicInventory;
+        else inv=currentUser.inventory;
+        div.innerHTML=RECIPES.map((rec,idx)=>{
+            let canCraft = true;
+            if(rec.requireTool){
+                const hasTool = inv.some(i=>i.name===rec.requireTool && i.amount>=1);
+                if(!hasTool) canCraft = false;
+            }
+            for(const cost of rec.costs){
+                const item = inv.find(i=>i.name===cost.name);
+                if(!item || item.amount < cost.qty) canCraft = false;
+            }
+            return `<div class="recipe-card">
+                        <div class="recipe-name">📐 ${rec.name} → ${rec.target} x${rec.targetAmount}</div>
+                        <div class="recipe-desc">📖 ${getRecipeDescription(rec.target)}</div>
+                        <div class="recipe-cost">${rec.costs.map(c=>`${c.name} x${c.qty}`).join(", ")}${rec.requireTool?` 🔧 需要工具: ${rec.requireTool}`:""}</div>
+                        <button class="craft-btn" data-idx="${idx}" ${canCraft?"":"disabled"}>🧪 合成</button>
+                    </div>`;
+        }).join("");
+        document.querySelectorAll(".craft-btn:not([disabled])").forEach(btn=>btn.addEventListener("click",(e)=>craftRecipe(RECIPES[parseInt(btn.dataset.idx)])));
+    }
+
     function craftRecipe(recipe) {
         let inv, isPublic=false;
-        if(currentUser.teamId && currentUser.isSharing && currentTeam) {
-            inv=currentTeam.publicInventory;
-            isPublic=true;
-        } else {
-            inv=currentUser.inventory;
-        }
-        if(recipe.requireTool) {
-            const hasTool=inv.some(i=>i.name===recipe.requireTool && i.amount>=1);
-            if(!hasTool){showMsg(`缺少工具: ${recipe.requireTool}`,"#craft-msg");return;}
-        }
-        for(const cost of recipe.costs) {
-            const item=inv.find(i=>i.name===cost.name);
-            if(!item||item.amount<cost.qty){showMsg("材料不足","#craft-msg");return;}
-        }
-        for(const cost of recipe.costs) {
-            const idx=inv.findIndex(i=>i.name===cost.name);
-            inv[idx].amount-=cost.qty;
-            if(inv[idx].amount===0) inv.splice(idx,1);
-        }
+        if(currentUser.teamId && currentUser.isSharing && currentTeam) { inv=currentTeam.publicInventory; isPublic=true; }
+        else inv=currentUser.inventory;
+        if(recipe.requireTool && !inv.some(i=>i.name===recipe.requireTool && i.amount>=1)){ showMsg(`缺少工具: ${recipe.requireTool}`,"#craft-msg"); return; }
+        for(const cost of recipe.costs){ const item=inv.find(i=>i.name===cost.name); if(!item||item.amount<cost.qty){ showMsg("材料不足","#craft-msg"); return; } }
+        for(const cost of recipe.costs){ const idx=inv.findIndex(i=>i.name===cost.name); inv[idx].amount-=cost.qty; if(inv[idx].amount===0) inv.splice(idx,1); }
         const existing=inv.find(i=>i.name===recipe.target);
         if(existing) existing.amount+=recipe.targetAmount;
         else inv.push({name:recipe.target,amount:recipe.targetAmount});
@@ -656,14 +933,8 @@
         updateUserAndTeam();
         showMsg(`✅ 合成 ${recipe.target} x${recipe.targetAmount}`,"#craft-msg");
         refreshInventoryDisplay();
+        renderRecipes();
         renderTeamPanel();
-    }
-
-    function renderRecipes() {
-        const div=document.getElementById("recipe-list");
-        if(!div) return;
-        div.innerHTML=RECIPES.map((rec,idx)=>`<div class="recipe-card"><div class="recipe-name">📐 ${rec.name} → ${rec.target} x${rec.targetAmount}</div><div class="recipe-desc">📖 ${getRecipeDescription(rec.target)}</div><div class="recipe-cost">${rec.costs.map(c=>`${c.name} x${c.qty}`).join(", ")}${rec.requireTool?` 🔧 需要工具: ${rec.requireTool}`:""}</div><button class="craft-btn" data-idx="${idx}">🧪 合成</button></div>`).join("");
-        document.querySelectorAll(".craft-btn").forEach(btn=>btn.addEventListener("click",(e)=>craftRecipe(RECIPES[parseInt(btn.dataset.idx)])));
     }
 
     function updateUserAndTeam() {
