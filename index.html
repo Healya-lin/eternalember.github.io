@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>余烬长明 · 废土物资管理系统</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0a0f1a; font-family: 'Segoe UI', 'Courier New', monospace;
+            color: #e6e3cf; padding: 20px;
+            background-image: radial-gradient(circle at 10% 20%, #1a2a2a 0%, #030609 100%);
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #7a5a3a; padding-bottom: 15px; }
+        .header h1 { font-size: 2.8rem; letter-spacing: 4px; text-shadow: 3px 3px 0 #2a2418; color: #dbbc87; }
+        .card {
+            background: rgba(20, 25, 35, 0.85); backdrop-filter: blur(2px);
+            border-radius: 28px; border: 1px solid #4a3e2c; padding: 20px 24px; margin-bottom: 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+        .card h2 { border-left: 6px solid #c97e2c; padding-left: 14px; margin-bottom: 18px; font-weight: 500; color: #f0d89e; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; align-items: flex-end; }
+        .input-group { flex: 1; min-width: 120px; }
+        .input-group label { display: block; font-size: 0.75rem; text-transform: uppercase; color: #b9aa82; letter-spacing: 1px; }
+        input, select, button {
+            background: #1e272b; border: 1px solid #5f5338; padding: 8px 12px;
+            border-radius: 20px; color: #f0efda; font-size: 0.9rem; width: 100%;
+            font-family: inherit;
+        }
+        button {
+            background: #5c3e1f; border-color: #b87c3a; cursor: pointer; font-weight: bold;
+            transition: 0.2s;
+        }
+        button:hover { background: #7a572f; box-shadow: 0 0 6px #e2a34a; }
+        .logout-btn, .danger-btn { background: #3a2a1c; border-color: #aa6f3c; }
+        .inventory-grid, .member-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; max-height: 420px; overflow-y: auto; padding: 6px; }
+        .inv-item, .member-item {
+            background: #131a1f; border-radius: 18px; padding: 8px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-left: 4px solid #d6903a; font-size: 0.85rem;
+        }
+        .inv-name { word-break: break-word; max-width: 65%; cursor: pointer; text-decoration: underline dotted #b87c3a; }
+        .inv-qty { background: #2e2a21; padding: 2px 8px; border-radius: 40px; font-weight: bold; }
+        .recipe-list { display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto; }
+        .recipe-card {
+            background: #1b2329; border-radius: 18px; padding: 12px; border: 1px solid #7c673d;
+        }
+        .recipe-name { font-weight: bold; color: #efb87e; font-size: 1.1rem; }
+        .recipe-desc { font-size: 0.75rem; color: #b8b08a; margin: 4px 0 8px 0; font-style: italic; border-left: 2px solid #7c673d; padding-left: 8px; }
+        .recipe-cost { font-size: 0.75rem; color: #b9b082; margin: 6px 0; }
+        .craft-btn { background: #3a5626; width: auto; padding: 6px 18px; margin-top: 6px; border-radius: 40px; }
+        .alert { background: #422c1a; border-radius: 20px; padding: 10px; margin: 12px 0; color: #ffcd94; font-size: 0.8rem; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .badge { background: #2c5a3a; padding: 4px 10px; border-radius: 30px; font-size: 0.7rem; }
+        .search-panel { background: #1e2a24; border-radius: 20px; padding: 12px; margin-top: 12px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+        footer { text-align: center; margin-top: 30px; font-size: 0.7rem; color: #6a5a40; }
+        .vote-request { background: #2a3a2a; margin: 8px 0; padding: 12px; border-radius: 16px; }
+        .vote-buttons button { width: auto; margin: 0 4px; padding: 4px 12px; }
+    </style>
+</head>
+<body>
+<div class="container" id="app"></div>
+
+<script>
+    // --------------------------------------------------------------
+    // 物资库、描述、合成配方（为节省篇幅保持简洁但完整）
+    // --------------------------------------------------------------
+    const ITEM_DESCRIPTIONS = {
+        "树枝": "最普通的树枝，路边就捡到了！","圆木": "表面的水让它们里面有些潮湿","碎布条": "从路边丢弃的衣服上撕下的布条",
+        "兽骨": "路边随处可见的腐烂的肉堆里捡到的骨头","小石子": "最普通的小石子","石块": "比小石子稍大一些",
+        "石板": "表面光滑平整","土豆块茎": "发芽的土豆块茎，不能食用但适合种植","小刀": "表面有点生锈，但还能用",
+        "玻璃杯": "表面有些裂痕","可食用水(500ml)": "超级珍贵的可以喝的水","铁片(250cm²)": "稍微有点薄，没什么锈迹",
+        "野菜": "虽然不知道是什么菜，但可以吃","铁丝": "不知道从哪里扯下来的一段","铁钉": "长短不一，锈迹斑斑",
+        "麻绳(3m)": "已经有些毛躁，但承受一个人的重量似乎不成问题","空罐头盒": "边缘锋利，可做简易锅",
+        "打火机": "生火的事情就不用担心了！","避孕套": "在各种层面都挺有用的！","鸡胸肉冻干(200g)": "给人吃刚刚好",
+        "午餐肉罐头(300g)": "太珍贵了","卫生纸(100抽)": "拿来生火有奇效！","羊毛(500g)": "被雪水浸湿了，晒晒还能用",
+        "锤子": "稍微用力点，应该可以给丧尸开颅吧","冰镐": "攀冰利器，能轻松凿开丧尸头盖骨","工兵铲": "挖雪、劈柴、拍丧尸三不误",
+        "医用酒精喷雾(60ml)": "虽然只有小小一瓶，但用处极大","防风打火机": "在风雪里也能打着","急救包": "里面有碘伏棉片、三角巾和止痛药",
+        "军用雪地帐篷": "四季节帐篷，能抗暴风雪","羽绒睡袋(-40℃)": "军用级羽绒睡袋","雪地伪装服": "白色迷彩罩衣",
+        "狩猎步枪": "栓动式猎枪，配瞄准镜","雪橇犬": "阿拉斯加雪橇犬，能拉雪橇也能警戒"
+    };
+    function getItemDescription(name) { return ITEM_DESCRIPTIONS[name] || "废土中寻到的普通物件。"; }
+
+    const RECIPE_DESCRIPTIONS = {
+        "简易冰镐": "可用于攀爬冰壁、凿开冰层、近战攻击。","骨制匕首": "轻型近战武器，攻击速度快。","钉刺球棒": "中型近战武器。",
+        "燃烧瓶": "投掷武器，造成范围火焰伤害。","简易睡袋": "保暖用品，抵御-10℃寒冷。","堆肥箱": "设施，将厨余转化为肥料。",
+        "简易陷阱": "狩猎/防御设施，捕捉小型动物或绊倒丧尸。"
+    };
+    function getRecipeDescription(target) { return RECIPE_DESCRIPTIONS[target] || "废土手工艺，凝聚生存智慧。"; }
+
+    const TIER_3_ITEMS = [
+        {name:"树枝",amount:6},{name:"圆木",amount:6},{name:"碎布条",amount:10},{name:"兽骨",amount:5},{name:"小石子",amount:10},
+        {name:"石块",amount:5},{name:"石板",amount:3},{name:"土豆块茎",amount:10},{name:"小刀",amount:1},{name:"玻璃杯",amount:1},
+        {name:"可食用水(500ml)",amount:1},{name:"铁片(250cm²)",amount:1},{name:"野菜",amount:5},{name:"铁丝",amount:1},{name:"铁钉",amount:10},
+        {name:"麻绳(3m)",amount:1},{name:"空罐头盒",amount:1},{name:"打火机",amount:1},{name:"避孕套",amount:1},{name:"鸡胸肉冻干(200g)",amount:2},
+        {name:"午餐肉罐头(300g)",amount:2},{name:"卫生纸(100抽)",amount:1},{name:"羊毛(500g)",amount:1}
+    ];
+    const TIER_4_ITEMS = [
+        {name:"锤子",amount:1},{name:"防切割手套",amount:1},{name:"食盐200g",amount:1},{name:"纱布",amount:1},{name:"手电筒",amount:1},
+        {name:"工兵铲",amount:1},{name:"冰镐",amount:1},{name:"医用酒精喷雾(60ml)",amount:1},{name:"防风打火机",amount:1},{name:"急救包",amount:1},
+        {name:"脱水蔬菜包",amount:3},{name:"鹿肉干",amount:1},{name:"滑雪板",amount:1},{name:"急救毯",amount:1}
+    ];
+    const TIER_5_ITEMS = [
+        {name:"军用雪地帐篷",amount:1},{name:"羽绒睡袋(-40℃)",amount:1},{name:"便携柴火炉",amount:1},{name:"雪地伪装服",amount:1},
+        {name:"户外净水器",amount:1},{name:"急救箱",amount:1},{name:"夜视仪",amount:1},{name:"复合弓",amount:1},{name:"十字弩",amount:1},
+        {name:"军用口粮包",amount:1},{name:"狩猎步枪",amount:1},{name:"雪地摩托",amount:1},{name:"雪橇犬",amount:2}
+    ];
+    const BASE_INVENTORY = [
+        {name:"树枝",amount:6},{name:"圆木",amount:6},{name:"碎布条",amount:10},{name:"兽骨",amount:5},{name:"小石子",amount:10},
+        {name:"石块",amount:5},{name:"石板",amount:3},{name:"土豆块茎",amount:10},{name:"小刀",amount:1},{name:"不锈钢勺",amount:1},
+        {name:"可食用水(500ml)",amount:1},{name:"铁片(250cm²)",amount:1},{name:"野菜",amount:5},{name:"铁丝",amount:1},{name:"铁钉",amount:10},
+        {name:"麻绳(3m)",amount:1}
+    ];
+    const RECIPES = [
+        {name:"简易冰镐",target:"简易冰镐",targetAmount:1,requireTool:null,costs:[{name:"铁片(250cm²)",qty:1},{name:"圆木",qty:1},{name:"麻绳(3m)",qty:1}]},
+        {name:"骨制匕首",target:"骨制匕首",targetAmount:1,requireTool:"小刀",costs:[{name:"兽骨",qty:1},{name:"碎布条",qty:1}]},
+        {name:"钉刺球棒",target:"钉刺球棒",targetAmount:1,requireTool:null,costs:[{name:"圆木",qty:1},{name:"铁钉",qty:10},{name:"铁丝",qty:1}]},
+        {name:"燃烧瓶",target:"燃烧瓶",targetAmount:1,requireTool:null,costs:[{name:"玻璃杯",qty:1},{name:"医用酒精喷雾(60ml)",qty:1},{name:"碎布条",qty:1}]},
+        {name:"简易睡袋",target:"简易睡袋",targetAmount:1,requireTool:null,costs:[{name:"羊毛(500g)",qty:2},{name:"碎布条",qty:5},{name:"麻绳(3m)",qty:1}]},
+        {name:"堆肥箱",target:"堆肥箱",targetAmount:1,requireTool:null,costs:[{name:"圆木",qty:6},{name:"铁钉",qty:10},{name:"石板",qty:1}]},
+        {name:"简易陷阱×2",target:"简易陷阱",targetAmount:2,requireTool:null,costs:[{name:"铁丝",qty:2},{name:"树枝",qty:3},{name:"麻绳(3m)",qty:1}]}
+    ];
+
+    // 辅助函数
+    function getRandomItemByTier(tier) {
+        let pool = tier===3?TIER_3_ITEMS:(tier===4?TIER_4_ITEMS:TIER_5_ITEMS);
+        if(!pool.length) return {name:"残羹剩饭",amount:1};
+        const idx = Math.floor(Math.random()*pool.length);
+        return {...pool[idx]};
+    }
+    function getTierByStats(intel,insp,luck) {
+        let prob4=0.3, prob5=0;
+        if(intel>=4) prob4+=0.2; if(insp>=4) prob4+=0.2; if(luck>=4) prob4+=0.2;
+        if(intel===6) prob5+=0.1; if(insp===6) prob5+=0.1; if(luck===6) prob5+=0.1;
+        prob4=Math.min(prob4,0.9); prob5=Math.min(prob5,0.3);
+        const r=Math.random();
+        if(r<prob5) return 5;
+        if(r<prob5+prob4) return 4;
+        return 3;
+    }
+    function performLoot(intel,insp,luck) {
+        const tier=getTierByStats(intel,insp,luck);
+        const item=getRandomItemByTier(tier);
+        return {...item};
+    }
+    function mergeInventory(inv) {
+        const map=new Map();
+        for(const it of inv) {
+            const key=it.name;
+            if(map.has(key)) map.get(key).amount+=it.amount;
+            else map.set(key,{name:key,amount:it.amount});
+        }
+        return Array.from(map.values());
+    }
+    function getBeijingDate() {
+        const now=new Date();
+        const offset=8*60;
+        const localOffset=now.getTimezoneOffset();
+        const beijing=new Date(now.getTime()+(offset+localOffset)*60000);
+        return beijing.toISOString().slice(0,10);
+    }
+    function checkAndResetFreeSearches(user) {
+        const today=getBeijingDate();
+        if(!user.lastFreeReset||user.lastFreeReset!==today) {
+            user.freeSearches=1;
+            user.lastFreeReset=today;
+            return true;
+        }
+        return false;
+    }
+
+    // 存储系统
+    const STORAGE_KEY="EmberLong_users_v5";
+    let teamsStore = {}; // teamId -> { id, members: [], publicInventory: [], pendingQuitRequests: [] }
+    function loadUsers() {
+        const raw=localStorage.getItem(STORAGE_KEY);
+        if(raw) return JSON.parse(raw);
+        return [];
+    }
+    function saveUsers(users) {
+        localStorage.setItem(STORAGE_KEY,JSON.stringify(users));
+        rebuildTeamsFromUsers(users);
+    }
+    function rebuildTeamsFromUsers(users) {
+        teamsStore={};
+        for(const u of users) {
+            if(u.teamId && !teamsStore[u.teamId]) {
+                teamsStore[u.teamId]={id:u.teamId,members:[],publicInventory:[],pendingQuitRequests:[]};
+            }
+        }
+        for(const u of users) {
+            if(u.teamId && teamsStore[u.teamId]) {
+                teamsStore[u.teamId].members.push(u.username);
+            }
+        }
+        // 公共库存从所有共享成员的个人库存汇总，并清空共享成员的库存
+        for(const tid in teamsStore) {
+            const team=teamsStore[tid];
+            team.publicInventory=[];
+            const sharedUsers=users.filter(u=>u.teamId===tid && u.isSharing);
+            for(const su of sharedUsers) {
+                for(const item of su.inventory) {
+                    const existing=team.publicInventory.find(i=>i.name===item.name);
+                    if(existing) existing.amount+=item.amount;
+                    else team.publicInventory.push({name:item.name,amount:item.amount});
+                }
+                su.inventory=[];
+            }
+        }
+        // 写回用户数据
+        for(const u of users) {
+            if(u.teamId && u.isSharing) u.inventory=[];
+        }
+        saveUsersRaw(users);
+    }
+    function saveUsersRaw(users) { localStorage.setItem(STORAGE_KEY,JSON.stringify(users)); }
+    function updateUserInStorage(updatedUser) {
+        const users=loadUsers();
+        const idx=users.findIndex(u=>u.username===updatedUser.username);
+        if(idx!==-1) users[idx]=updatedUser;
+        saveUsers(users);
+    }
+
+    let currentUser=null;
+    let currentTeam=null;
+
+    function render() {
+        const app=document.getElementById("app");
+        if(!currentUser) renderLoginRegister(app);
+        else renderDashboard(app);
+    }
+
+    // 登录注册
+    function renderLoginRegister(container) {
+        container.innerHTML=`
+            <div class="header"><h1>🔥 余烬长明</h1><p>废土幸存者物资档案</p></div>
+            <div class="card" style="max-width:600px;margin:0 auto;"><h2>⚙️ 身份辨识</h2>
+            <div id="auth-tab"><div style="display:flex;gap:12px;margin-bottom:20px;"><button id="btn-login-tab">登录</button><button id="btn-reg-tab">创建新幸存者</button></div>
+            <div id="login-panel"><div class="input-group"><label>账号</label><input id="login-username"></div><div class="input-group"><label>密码</label><input id="login-password" type="password"></div><button id="do-login">进入废土</button><div id="login-msg" class="alert" style="display:none;"></div></div>
+            <div id="reg-panel" style="display:none;"><div class="input-group"><label>账号</label><input id="reg-username"></div><div class="input-group"><label>密码</label><input id="reg-password" type="password"></div><div class="input-group"><label>幸存者姓名</label><input id="reg-name"></div>
+            <div style="background:#1e262a;padding:12px;border-radius:18px;margin:12px 0;"><div class="flex-between"><span>🧠 点数分配 (总计≤16，单项1~6)</span><span id="points-left">剩余16</span></div>
+            <div class="form-row"><div class="input-group"><label>力量</label><input id="stat-str" type="number" min="1" max="6" value="3"></div><div class="input-group"><label>速度</label><input id="stat-spd" type="number" min="1" max="6" value="3"></div><div class="input-group"><label>智力</label><input id="stat-int" type="number" min="1" max="6" value="3"></div><div class="input-group"><label>灵感</label><input id="stat-ins" type="number" min="1" max="6" value="3"></div><div class="input-group"><label>幸运</label><input id="stat-luck" type="number" min="1" max="6" value="3"></div></div></div>
+            <button id="do-register">于灰烬中诞生</button><div id="reg-msg" class="alert" style="display:none;"></div></div></div></div>`;
+        document.getElementById("btn-login-tab").onclick=()=>{document.getElementById("login-panel").style.display="block";document.getElementById("reg-panel").style.display="none";};
+        document.getElementById("btn-reg-tab").onclick=()=>{document.getElementById("login-panel").style.display="none";document.getElementById("reg-panel").style.display="block";updatePointsLeft();};
+        document.getElementById("do-login").onclick=doLogin;
+        document.getElementById("do-register").onclick=doRegister;
+        function updatePointsLeft() {
+            const str=+document.getElementById("stat-str").value||0, spd=+document.getElementById("stat-spd").value||0, int=+document.getElementById("stat-int").value||0, ins=+document.getElementById("stat-ins").value||0, luck=+document.getElementById("stat-luck").value||0;
+            const total=str+spd+int+ins+luck;
+            document.getElementById("points-left").innerText=`剩余${16-total}`;
+        }
+        function doLogin() {
+            const username=document.getElementById("login-username").value.trim();
+            const pwd=document.getElementById("login-password").value;
+            const users=loadUsers();
+            const user=users.find(u=>u.username===username && u.password===pwd);
+            if(user) {
+                if(!user.usedPasswords) user.usedPasswords=[];
+                if(!user.contribution) user.contribution=[];
+                checkAndResetFreeSearches(user);
+                currentUser=user;
+                if(currentUser.teamId) currentTeam=teamsStore[currentUser.teamId];
+                else currentTeam=null;
+                render();
+            } else {
+                document.getElementById("login-msg").innerText="身份验证失败";
+                document.getElementById("login-msg").style.display="block";
+            }
+        }
+        function doRegister() {
+            const username=document.getElementById("reg-username").value.trim();
+            const pwd=document.getElementById("reg-password").value;
+            const name=document.getElementById("reg-name").value.trim();
+            const str=+document.getElementById("stat-str").value, spd=+document.getElementById("stat-spd").value, int=+document.getElementById("stat-int").value, ins=+document.getElementById("stat-ins").value, luck=+document.getElementById("stat-luck").value;
+            const total=str+spd+int+ins+luck;
+            if(!username||!pwd||!name) {alert("请填满信息");return;}
+            if(total>16||str<1||spd<1||int<1||ins<1||luck<1||str>6||spd>6||int>6||ins>6||luck>6){alert("点数不合规");return;}
+            const users=loadUsers();
+            if(users.find(u=>u.username===username)){alert("账号已存在");return;}
+            const inventory=JSON.parse(JSON.stringify(BASE_INVENTORY));
+            const stats={strength:str,speed:spd,intelligence:int,inspiration:ins,luck:luck};
+            const newUser={username,password:pwd,survivorName:name,stats,inventory,freeSearches:2,lastFreeReset:getBeijingDate(),usedPasswords:[],teamId:null,isSharing:false,contribution:[]};
+            users.push(newUser);
+            saveUsers(users);
+            currentUser=newUser;
+            render();
+        }
+    }
+
+    // 主面板
+    function renderDashboard(container) {
+        const stats=currentUser.stats;
+        const freeLeft=currentUser.freeSearches;
+        container.innerHTML=`
+            <div class="flex-between"><div><h1>🏕️ ${currentUser.survivorName} 的避难记录</h1></div><button id="logout-btn" class="logout-btn">离开废土</button></div>
+            <div class="card"><h2>📜 幸存者档案</h2><div>力量 ${stats.strength} | 速度 ${stats.speed} | 智力 ${stats.intelligence} | 灵感 ${stats.inspiration} | 幸运 ${stats.luck} (总${stats.strength+stats.speed+stats.intelligence+stats.inspiration+stats.luck}/16)</div>
+            <div class="search-panel"><div class="badge">✨ 今日免费搜寻: ${freeLeft} 次</div><button id="free-search-btn">🔍 免费搜寻</button><div class="input-group"><label>物资密码</label><input id="password-input"></div><button id="pwd-search-btn">🔐 密码搜寻</button></div></div>
+            <div class="card"><h2>📦 随身物资 <span style="font-size:0.7rem;">(点击名称查看描述)</span></h2><div id="inventory-list" class="inventory-grid"></div></div>
+            <div class="card"><h2>🤝 小队系统</h2><div id="team-panel"></div></div>
+            <div class="card"><h2>🎁 物资赠予</h2><div class="search-panel"><div class="input-group"><label>接收者用户名</label><input id="gift-target"></div><button id="gift-search-btn">🔎 查找用户</button></div><div id="gift-result"></div></div>
+            <div class="card"><h2>⚒️ 废土工坊 · 合成</h2><div class="recipe-list" id="recipe-list"></div><div id="craft-msg" class="alert"></div></div>
+            <footer>⚠️ 每日0点(北京时间)重置免费搜寻次数至1次，初始额外赠送2次。每个密码每个幸存者限用一次。</footer>`;
+        document.getElementById("logout-btn").onclick=()=>{currentUser=null;render();};
+        document.getElementById("free-search-btn").onclick=performFreeSearch;
+        document.getElementById("pwd-search-btn").onclick=()=>{const pwd=document.getElementById("password-input").value.trim();if(pwd)performPasswordSearch(pwd);else showMsg("请输入密码","#craft-msg");};
+        document.getElementById("gift-search-btn").onclick=showGiftPanel;
+        refreshInventoryDisplay();
+        renderRecipes();
+        renderTeamPanel();
+    }
+
+    function refreshInventoryDisplay() {
+        const div=document.getElementById("inventory-list");
+        if(!div) return;
+        let inv;
+        if(currentUser.teamId && currentUser.isSharing && currentTeam) inv=currentTeam.publicInventory;
+        else inv=currentUser.inventory;
+        if(!inv.length){div.innerHTML="<div>空无一物</div>";return;}
+        div.innerHTML=inv.map(item=>`<div class="inv-item"><span class="inv-name" title="${getItemDescription(item.name)}" onclick="alert('${getItemDescription(item.name).replace(/'/g,"\\'")}')">${item.name}</span><span class="inv-qty">✖️${item.amount}</span></div>`).join("");
+    }
+
+    function performFreeSearch() {
+        checkAndResetFreeSearches(currentUser);
+        if(currentUser.freeSearches<=0){showMsg("今日免费次数已用完","#craft-msg");return;}
+        const loot=performLoot(currentUser.stats.intelligence,currentUser.stats.inspiration,currentUser.stats.luck);
+        if(currentUser.teamId && currentUser.isSharing && currentTeam) {
+            addToPublicAndContribution(currentTeam,loot);
+        } else {
+            currentUser.inventory.push(loot);
+            currentUser.inventory=mergeInventory(currentUser.inventory);
+        }
+        currentUser.freeSearches--;
+        updateUserAndTeam();
+        showMsg(`🔍 获得 ${loot.name} x${loot.amount}`,"#craft-msg");
+        refreshInventoryDisplay();
+        renderTeamPanel();
+    }
+
+    function performPasswordSearch(pwd) {
+        const valid=Array.from({length:50},(_,i)=>(1001+i).toString());
+        if(!valid.includes(pwd)){showMsg("密码错误","#craft-msg");return;}
+        if(currentUser.usedPasswords.includes(pwd)){showMsg(`密码 ${pwd} 已使用过`,"#craft-msg");return;}
+        const loot=performLoot(currentUser.stats.intelligence,currentUser.stats.inspiration,currentUser.stats.luck);
+        if(currentUser.teamId && currentUser.isSharing && currentTeam) {
+            addToPublicAndContribution(currentTeam,loot);
+        } else {
+            currentUser.inventory.push(loot);
+            currentUser.inventory=mergeInventory(currentUser.inventory);
+        }
+        currentUser.usedPasswords.push(pwd);
+        updateUserAndTeam();
+        showMsg(`🔐 获得 ${loot.name} x${loot.amount}`,"#craft-msg");
+        refreshInventoryDisplay();
+        renderTeamPanel();
+    }
+
+    function addToPublicAndContribution(team,item) {
+        const existing=team.publicInventory.find(i=>i.name===item.name);
+        if(existing) existing.amount+=item.amount;
+        else team.publicInventory.push({name:item.name,amount:item.amount});
+        const contribExisting=currentUser.contribution.find(c=>c.name===item.name);
+        if(contribExisting) contribExisting.amount+=item.amount;
+        else currentUser.contribution.push({name:item.name,amount:item.amount});
+    }
+
+    function renderTeamPanel() {
+        const panel=document.getElementById("team-panel");
+        if(!panel) return;
+        if(!currentUser.teamId) {
+            panel.innerHTML=`<div class="flex-between"><span>未加入任何小队</span><div><div class="input-group"><input id="invite-username" placeholder="用户名"></div><button id="create-team-btn">创建小队</button><button id="invite-btn">邀请加入</button></div></div>`;
+            document.getElementById("create-team-btn")?.addEventListener("click",createTeam);
+            document.getElementById("invite-btn")?.addEventListener("click",()=>sendInvite(document.getElementById("invite-username").value.trim()));
+            return;
+        }
+        const team=teamsStore[currentUser.teamId];
+        if(!team) {currentUser.teamId=null;updateUserAndTeam();renderTeamPanel();return;}
+        currentTeam=team;
+        const membersHtml=team.members.map(uname=>{
+            const user=loadUsers().find(u=>u.username===uname);
+            const shareStatus=user?.isSharing?"共享中":"私有";
+            const isCurrent=uname===currentUser.username;
+            return `<div class="member-item"><span>${uname}${isCurrent?" (你)":""} - ${shareStatus}</span>${isCurrent?`<button id="toggle-share-btn">${currentUser.isSharing?"退出共享":"加入共享"}</button><button id="quit-team-btn" class="danger-btn">退出小队</button>`:""}</div>`;
+        }).join("");
+        let pendingHtml="";
+        if(team.pendingQuitRequests && team.pendingQuitRequests.length>0){
+            pendingHtml="<h4>待处理退出请求</h4>";
+            team.pendingQuitRequests.forEach((req,idx)=>{
+                const itemsStr=req.items.map(i=>`${i.name} x${i.amount}`).join(", ");
+                const voted=req.votes.includes(currentUser.username);
+                pendingHtml+=`<div class="vote-request"><strong>${req.username}</strong> 请求带走: ${itemsStr}<br>同意票: ${req.votes.length}/${team.members.length}${voted?" (已投票)":` <button class="vote-yes" data-idx="${idx}">同意</button>`}</div>`;
+            });
+        }
+        panel.innerHTML=`<h3>小队成员</h3><div class="member-list">${membersHtml}</div><div class="flex-between"><div class="input-group"><input id="invite-new" placeholder="邀请用户名"></div><button id="invite-member-btn">邀请加入</button></div>${currentUser.isSharing?`<div><strong>小队公共仓库</strong><div id="team-inventory" class="inventory-grid" style="max-height:200px;"></div></div>`:""}${pendingHtml}`;
+        document.getElementById("toggle-share-btn")?.addEventListener("click",toggleShare);
+        document.getElementById("quit-team-btn")?.addEventListener("click",startQuit);
+        document.getElementById("invite-member-btn")?.addEventListener("click",()=>sendInvite(document.getElementById("invite-new").value.trim()));
+        if(currentUser.isSharing && team.publicInventory) {
+            const teamInvDiv=document.getElementById("team-inventory");
+            if(teamInvDiv) teamInvDiv.innerHTML=team.publicInventory.map(i=>`<div class="inv-item"><span>${i.name}</span><span>✖️${i.amount}</span></div>`).join("");
+        }
+        document.querySelectorAll(".vote-yes").forEach(btn=>{
+            btn.addEventListener("click",()=>{
+                const idx=parseInt(btn.dataset.idx);
+                const req=team.pendingQuitRequests[idx];
+                if(req && !req.votes.includes(currentUser.username)){
+                    req.votes.push(currentUser.username);
+                    if(req.votes.length > team.members.length/2){
+                        executeQuit(req.username);
+                    } else {
+                        updateUserAndTeam();
+                        renderTeamPanel();
+                    }
+                }
+            });
+        });
+    }
+
+    function createTeam() {
+        if(currentUser.teamId){showMsg("已在小队中","#craft-msg");return;}
+        const teamId="team_"+Date.now()+"_"+Math.random().toString(36);
+        const newTeam={id:teamId,members:[currentUser.username],publicInventory:[],pendingQuitRequests:[]};
+        teamsStore[teamId]=newTeam;
+        currentUser.teamId=teamId;
+        currentUser.isSharing=false;
+        currentUser.contribution=[];
+        updateUserAndTeam();
+        renderDashboard(document.getElementById("app"));
+        showMsg("小队创建成功","#craft-msg");
+    }
+
+    function sendInvite(targetName) {
+        if(!targetName){showMsg("输入用户名","#craft-msg");return;}
+        if(targetName===currentUser.username){showMsg("不能邀请自己","#craft-msg");return;}
+        const users=loadUsers();
+        const target=users.find(u=>u.username===targetName);
+        if(!target){showMsg("用户不存在","#craft-msg");return;}
+        if(target.teamId){showMsg("对方已有小队","#craft-msg");return;}
+        if(!currentUser.teamId){showMsg("请先创建小队","#craft-msg");return;}
+        const team=teamsStore[currentUser.teamId];
+        if(team.members.includes(targetName)){showMsg("已在队中","#craft-msg");return;}
+        team.members.push(targetName);
+        target.teamId=currentUser.teamId;
+        target.isSharing=false;
+        target.contribution=[];
+        saveUsers(users);
+        rebuildTeamsFromUsers(loadUsers());
+        currentTeam=teamsStore[currentUser.teamId];
+        showMsg(`已邀请 ${targetName} 加入`,"#craft-msg");
+        renderTeamPanel();
+    }
+
+    function toggleShare() {
+        if(!currentUser.teamId) return;
+        const team=teamsStore[currentUser.teamId];
+        if(!team) return;
+        if(!currentUser.isSharing) {
+            for(const item of currentUser.inventory) {
+                addToPublicAndContribution(team,item);
+            }
+            currentUser.inventory=[];
+            currentUser.isSharing=true;
+        } else {
+            currentUser.isSharing=false;
+        }
+        updateUserAndTeam();
+        renderTeamPanel();
+        refreshInventoryDisplay();
+        showMsg(`已${currentUser.isSharing?"加入共享":"退出共享"}`,"#craft-msg");
+    }
+
+    function startQuit() {
+        if(!currentUser.teamId) return;
+        const team=teamsStore[currentUser.teamId];
+        if(!team) return;
+        if(!currentUser.isSharing) {
+            executeQuit(currentUser.username);
+            return;
+        }
+        const contribution=currentUser.contribution;
+        if(!contribution.length){
+            executeQuit(currentUser.username);
+            return;
+        }
+        let modal=document.createElement("div");
+        modal.id="quit-modal";
+        modal.style.position="fixed";modal.style.top="50%";modal.style.left="50%";modal.style.transform="translate(-50%,-50%)";
+        modal.style.background="#1b2329";modal.style.padding="20px";modal.style.borderRadius="28px";modal.style.zIndex=1000;modal.style.width="400px";
+        let options=contribution.map(c=>`<div><label>${c.name} (最多 ${c.amount})</label><input type="number" min="0" max="${c.amount}" data-name="${c.name}" value="0" class="quit-qty"></div>`).join("");
+        modal.innerHTML=`<h3>选择要带走的物资（不超过贡献）</h3>${options}<button id="submit-quit">确认并申请退出</button><button id="cancel-quit">取消</button>`;
+        document.body.appendChild(modal);
+        const overlay=document.createElement("div");
+        overlay.style.position="fixed";overlay.style.top=0;overlay.style.left=0;overlay.style.right=0;overlay.style.bottom=0;
+        overlay.style.background="rgba(0,0,0,0.7)";overlay.style.zIndex=999;
+        document.body.appendChild(overlay);
+        document.getElementById("submit-quit").onclick=()=>{
+            const items=[];
+            document.querySelectorAll(".quit-qty").forEach(input=>{
+                const qty=parseInt(input.value);
+                if(qty>0){
+                    const name=input.dataset.name;
+                    items.push({name,amount:qty});
+                }
+            });
+            if(items.length===0){
+                alert("请至少选择一件物资");
+                return;
+            }
+            let valid=true;
+            for(const it of items){
+                const contrib=contribution.find(c=>c.name===it.name);
+                if(!contrib || it.amount>contrib.amount) valid=false;
+            }
+            if(!valid){alert("选择数量超过贡献");return;}
+            const request={username:currentUser.username,items, votes:[]};
+            if(!team.pendingQuitRequests) team.pendingQuitRequests=[];
+            team.pendingQuitRequests.push(request);
+            updateUserAndTeam();
+            modal.remove();overlay.remove();
+            showMsg("退出请求已发送，等待小队投票","#craft-msg");
+            renderTeamPanel();
+        };
+        document.getElementById("cancel-quit").onclick=()=>{modal.remove();overlay.remove();};
+    }
+
+    function executeQuit(username) {
+        const users=loadUsers();
+        const user=users.find(u=>u.username===username);
+        if(!user) return;
+        const team=teamsStore[user.teamId];
+        if(!team) return;
+        let pendingReq=null;
+        if(team.pendingQuitRequests){
+            const idx=team.pendingQuitRequests.findIndex(r=>r.username===username);
+            if(idx!==-1) pendingReq=team.pendingQuitRequests[idx];
+        }
+        if(user.isSharing && pendingReq){
+            for(const it of pendingReq.items){
+                const pubItem=team.publicInventory.find(i=>i.name===it.name);
+                if(pubItem) pubItem.amount-=it.amount;
+                const userItem=user.inventory.find(i=>i.name===it.name);
+                if(userItem) userItem.amount+=it.amount;
+                else user.inventory.push({name:it.name,amount:it.amount});
+                const contrib=user.contribution.find(c=>c.name===it.name);
+                if(contrib) contrib.amount-=it.amount;
+            }
+            team.publicInventory=team.publicInventory.filter(i=>i.amount>0);
+            user.inventory=mergeInventory(user.inventory);
+            user.contribution=user.contribution.filter(c=>c.amount>0);
+        }
+        team.members=team.members.filter(m=>m!==username);
+        user.teamId=null;
+        user.isSharing=false;
+        if(team.pendingQuitRequests) team.pendingQuitRequests=team.pendingQuitRequests.filter(r=>r.username!==username);
+        if(team.members.length===0) delete teamsStore[team.id];
+        saveUsers(users);
+        if(username===currentUser.username){
+            currentUser=user;
+            currentTeam=null;
+            renderDashboard(document.getElementById("app"));
+        } else {
+            renderTeamPanel();
+        }
+        showMsg(`${username} 已退出小队`,"#craft-msg");
+    }
+
+    function showGiftPanel() {
+        const targetName=document.getElementById("gift-target").value.trim();
+        if(!targetName){showMsg("请输入用户名","#craft-msg");return;}
+        const users=loadUsers();
+        const target=users.find(u=>u.username===targetName);
+        if(!target){showMsg("用户不存在","#craft-msg");return;}
+        if(target.username===currentUser.username){showMsg("不能赠送给自己","#craft-msg");return;}
+        let sourceInv;
+        if(currentUser.teamId && currentUser.isSharing && currentTeam) sourceInv=currentTeam.publicInventory;
+        else sourceInv=currentUser.inventory;
+        if(sourceInv.length===0){showMsg("没有物资可赠送","#craft-msg");return;}
+        let options=sourceInv.map(i=>`<option value="${i.name}">${i.name} (x${i.amount})</option>`).join("");
+        let modal=document.createElement("div");
+        modal.id="gift-modal";
+        modal.style.position="fixed";modal.style.top="50%";modal.style.left="50%";modal.style.transform="translate(-50%,-50%)";
+        modal.style.background="#1b2329";modal.style.padding="20px";modal.style.borderRadius="28px";modal.style.zIndex=1000;modal.style.width="300px";
+        modal.innerHTML=`<h3>赠送物资给 ${targetName}</h3><select id="gift-item">${options}</select><input id="gift-qty" type="number" min="1" placeholder="数量"><button id="confirm-gift">赠送</button><button id="close-gift">取消</button>`;
+        document.body.appendChild(modal);
+        const overlay=document.createElement("div");
+        overlay.style.position="fixed";overlay.style.top=0;overlay.style.left=0;overlay.style.right=0;overlay.style.bottom=0;
+        overlay.style.background="rgba(0,0,0,0.7)";overlay.style.zIndex=999;
+        document.body.appendChild(overlay);
+        document.getElementById("confirm-gift").onclick=()=>{
+            const itemName=document.getElementById("gift-item").value;
+            const qty=parseInt(document.getElementById("gift-qty").value);
+            if(isNaN(qty)||qty<=0){alert("数量无效");return;}
+            let srcInv;
+            if(currentUser.teamId && currentUser.isSharing && currentTeam) srcInv=currentTeam.publicInventory;
+            else srcInv=currentUser.inventory;
+            const srcItem=srcInv.find(i=>i.name===itemName);
+            if(!srcItem||srcItem.amount<qty){alert("物资不足");return;}
+            srcItem.amount-=qty;
+            if(srcItem.amount===0) srcInv.splice(srcInv.indexOf(srcItem),1);
+            const targetUser=users.find(u=>u.username===targetName);
+            if(targetUser){
+                if(targetUser.teamId && targetUser.isSharing && teamsStore[targetUser.teamId]){
+                    const team=teamsStore[targetUser.teamId];
+                    const pubItem=team.publicInventory.find(i=>i.name===itemName);
+                    if(pubItem) pubItem.amount+=qty;
+                    else team.publicInventory.push({name:itemName,amount:qty});
+                    const contrib=targetUser.contribution.find(c=>c.name===itemName);
+                    if(contrib) contrib.amount+=qty;
+                    else targetUser.contribution.push({name:itemName,amount:qty});
+                } else {
+                    const existing=targetUser.inventory.find(i=>i.name===itemName);
+                    if(existing) existing.amount+=qty;
+                    else targetUser.inventory.push({name:itemName,amount:qty});
+                }
+                saveUsers(users);
+            }
+            updateUserAndTeam();
+            modal.remove();overlay.remove();
+            showMsg(`成功赠送 ${qty} 个 ${itemName} 给 ${targetName}`,"#craft-msg");
+            renderDashboard(document.getElementById("app"));
+        };
+        document.getElementById("close-gift").onclick=()=>{modal.remove();overlay.remove();};
+    }
+
+    function craftRecipe(recipe) {
+        let inv, isPublic=false;
+        if(currentUser.teamId && currentUser.isSharing && currentTeam) {
+            inv=currentTeam.publicInventory;
+            isPublic=true;
+        } else {
+            inv=currentUser.inventory;
+        }
+        if(recipe.requireTool) {
+            const hasTool=inv.some(i=>i.name===recipe.requireTool && i.amount>=1);
+            if(!hasTool){showMsg(`缺少工具: ${recipe.requireTool}`,"#craft-msg");return;}
+        }
+        for(const cost of recipe.costs) {
+            const item=inv.find(i=>i.name===cost.name);
+            if(!item||item.amount<cost.qty){showMsg("材料不足","#craft-msg");return;}
+        }
+        for(const cost of recipe.costs) {
+            const idx=inv.findIndex(i=>i.name===cost.name);
+            inv[idx].amount-=cost.qty;
+            if(inv[idx].amount===0) inv.splice(idx,1);
+        }
+        const existing=inv.find(i=>i.name===recipe.target);
+        if(existing) existing.amount+=recipe.targetAmount;
+        else inv.push({name:recipe.target,amount:recipe.targetAmount});
+        if(isPublic && currentTeam){
+            const contribExisting=currentUser.contribution.find(c=>c.name===recipe.target);
+            if(contribExisting) contribExisting.amount+=recipe.targetAmount;
+            else currentUser.contribution.push({name:recipe.target,amount:recipe.targetAmount});
+        }
+        updateUserAndTeam();
+        showMsg(`✅ 合成 ${recipe.target} x${recipe.targetAmount}`,"#craft-msg");
+        refreshInventoryDisplay();
+        renderTeamPanel();
+    }
+
+    function renderRecipes() {
+        const div=document.getElementById("recipe-list");
+        if(!div) return;
+        div.innerHTML=RECIPES.map((rec,idx)=>`<div class="recipe-card"><div class="recipe-name">📐 ${rec.name} → ${rec.target} x${rec.targetAmount}</div><div class="recipe-desc">📖 ${getRecipeDescription(rec.target)}</div><div class="recipe-cost">${rec.costs.map(c=>`${c.name} x${c.qty}`).join(", ")}${rec.requireTool?` 🔧 需要工具: ${rec.requireTool}`:""}</div><button class="craft-btn" data-idx="${idx}">🧪 合成</button></div>`).join("");
+        document.querySelectorAll(".craft-btn").forEach(btn=>btn.addEventListener("click",(e)=>craftRecipe(RECIPES[parseInt(btn.dataset.idx)])));
+    }
+
+    function updateUserAndTeam() {
+        const users=loadUsers();
+        const idx=users.findIndex(u=>u.username===currentUser.username);
+        if(idx!==-1) users[idx]=currentUser;
+        saveUsers(users);
+        if(currentUser.teamId) currentTeam=teamsStore[currentUser.teamId];
+        else currentTeam=null;
+    }
+
+    function showMsg(msg,selector="#craft-msg") {
+        const el=document.querySelector(selector);
+        if(el){el.innerText=msg;el.style.display="block";setTimeout(()=>el.style.display="none",3000);}
+    }
+
+    render();
+</script>
+</body>
+</html>
