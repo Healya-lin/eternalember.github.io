@@ -35,31 +35,107 @@
         }
         button:hover { background: #7a572f; box-shadow: 0 0 6px #e2a34a; }
         button:disabled { background: #3a3a2a; border-color: #5a5a3a; cursor: not-allowed; opacity: 0.6; }
-        .logout-btn, .danger-btn { background: #3a2a1c; border-color: #aa6f3c; }
-        .inventory-grid, .member-list, .friend-list, .request-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; max-height: 420px; overflow-y: auto; padding: 6px; }
-        .inv-item, .member-item, .friend-item, .request-item {
+        .logout-btn { background: #3a2a1c; border-color: #aa6f3c; }
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding: 6px;
+        }
+        .inv-item {
             background: #131a1f; border-radius: 18px; padding: 8px 12px;
             display: flex; justify-content: space-between; align-items: center;
             border-left: 4px solid #d6903a; font-size: 0.85rem;
         }
-        .inv-name { word-break: break-word; max-width: 65%; cursor: pointer; text-decoration: underline dotted #b87c3a; }
-        .inv-qty { background: #2e2a21; padding: 2px 8px; border-radius: 40px; font-weight: bold; }
-        .recipe-list { display: flex; flex-direction: column; gap: 12px; max-height: 600px; overflow-y: auto; }
-        .recipe-card {
-            background: #1b2329; border-radius: 18px; padding: 12px; border: 1px solid #7c673d;
+        .inv-name {
+            word-break: break-word;
+            max-width: 65%;
+            cursor: pointer;
+            text-decoration: underline dotted #b87c3a;
         }
-        .recipe-name { font-weight: bold; color: #efb87e; font-size: 1.1rem; }
-        .recipe-desc { font-size: 0.75rem; color: #b8b08a; margin: 4px 0 8px 0; font-style: italic; border-left: 2px solid #7c673d; padding-left: 8px; }
-        .recipe-cost { font-size: 0.75rem; color: #b9b082; margin: 6px 0; }
-        .craft-btn { background: #3a5626; width: auto; padding: 6px 18px; margin-top: 6px; border-radius: 40px; }
-        .alert { background: #422c1a; border-radius: 20px; padding: 10px; margin: 12px 0; color: #ffcd94; font-size: 0.8rem; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-        .badge { background: #2c5a3a; padding: 4px 10px; border-radius: 30px; font-size: 0.7rem; }
-        .search-panel { background: #1e2a24; border-radius: 20px; padding: 12px; margin-top: 12px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
-        footer { text-align: center; margin-top: 30px; font-size: 0.7rem; color: #6a5a40; }
-        .vote-request { background: #2a3a2a; margin: 8px 0; padding: 12px; border-radius: 16px; }
-        .team-key { font-family: monospace; background: #2a2a1a; padding: 4px 8px; border-radius: 12px; display: inline-block; }
-        .request-badge { background: #c97e2c; color: #0a0f1a; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; margin-left: 8px; }
+        .inv-qty {
+            background: #2e2a21;
+            padding: 2px 8px;
+            border-radius: 40px;
+            font-weight: bold;
+        }
+        .recipe-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .recipe-card {
+            background: #1b2329;
+            border-radius: 18px;
+            padding: 12px;
+            border: 1px solid #7c673d;
+        }
+        .recipe-name {
+            font-weight: bold;
+            color: #efb87e;
+            font-size: 1.1rem;
+        }
+        .recipe-desc {
+            font-size: 0.75rem;
+            color: #b8b08a;
+            margin: 4px 0 8px 0;
+            font-style: italic;
+            border-left: 2px solid #7c673d;
+            padding-left: 8px;
+        }
+        .recipe-cost {
+            font-size: 0.75rem;
+            color: #b9b082;
+            margin: 6px 0;
+        }
+        .craft-btn {
+            background: #3a5626;
+            width: auto;
+            padding: 6px 18px;
+            margin-top: 6px;
+            border-radius: 40px;
+        }
+        .alert {
+            background: #422c1a;
+            border-radius: 20px;
+            padding: 10px;
+            margin: 12px 0;
+            color: #ffcd94;
+            font-size: 0.8rem;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .badge {
+            background: #2c5a3a;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+        }
+        .search-panel {
+            background: #1e2a24;
+            border-radius: 20px;
+            padding: 12px;
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.7rem;
+            color: #6a5a40;
+        }
     </style>
 </head>
 <body>
@@ -351,8 +427,7 @@
     // =============================================================
     // 存储系统
     // =============================================================
-    const STORAGE_KEY="EmberLong_users_final";
-    let teamsStore = {};
+    const STORAGE_KEY="EmberLong_users_final_nosocial";
     function loadUsers() {
         const raw=localStorage.getItem(STORAGE_KEY);
         if(raw) return JSON.parse(raw);
@@ -360,44 +435,9 @@
     }
     function saveUsers(users) {
         localStorage.setItem(STORAGE_KEY,JSON.stringify(users));
-        rebuildTeamsFromUsers(users);
     }
-    function rebuildTeamsFromUsers(users) {
-        teamsStore={};
-        for(const u of users) {
-            if(u.teamId && !teamsStore[u.teamId]) {
-                const teamData = u.teamData || {};
-                teamsStore[u.teamId]={id:u.teamId, members:[], publicInventory:[], pendingQuitRequests:[], key: teamData.key || ""};
-            }
-        }
-        for(const u of users) {
-            if(u.teamId && teamsStore[u.teamId]) {
-                teamsStore[u.teamId].members.push(u.username);
-                if(u.teamData && u.teamData.key) teamsStore[u.teamId].key = u.teamData.key;
-            }
-        }
-        for(const tid in teamsStore) {
-            const team=teamsStore[tid];
-            team.publicInventory=[];
-            const sharedUsers=users.filter(u=>u.teamId===tid && u.isSharing);
-            for(const su of sharedUsers) {
-                for(const item of su.inventory) {
-                    const existing=team.publicInventory.find(i=>i.name===item.name);
-                    if(existing) existing.amount+=item.amount;
-                    else team.publicInventory.push({name:item.name,amount:item.amount});
-                }
-                su.inventory=[];
-            }
-        }
-        for(const u of users) {
-            if(u.teamId && u.isSharing) u.inventory=[];
-        }
-        saveUsersRaw(users);
-    }
-    function saveUsersRaw(users) { localStorage.setItem(STORAGE_KEY,JSON.stringify(users)); }
 
     let currentUser=null;
-    let currentTeam=null;
 
     function render() {
         const app=document.getElementById("app");
@@ -434,15 +474,8 @@
             const user=users.find(u=>u.username===username && u.password===pwd);
             if(user) {
                 if(!user.usedPasswords) user.usedPasswords=[];
-                if(!user.contribution) user.contribution=[];
-                if(!user.friends) user.friends=[];
-                if(!user.teamData) user.teamData={};
-                if(!user.pendingFriendRequests) user.pendingFriendRequests=[];
-                if(!user.pendingTeamInvites) user.pendingTeamInvites=[];
                 checkAndResetFreeSearches(user);
                 currentUser=user;
-                if(currentUser.teamId) currentTeam=teamsStore[currentUser.teamId];
-                else currentTeam=null;
                 render();
             } else {
                 document.getElementById("login-msg").innerText="身份验证失败";
@@ -463,9 +496,7 @@
             const stats={strength:str,speed:spd,intelligence:int,inspiration:ins,luck:luck};
             const newUser={
                 username, password:pwd, survivorName:name, stats, inventory,
-                freeSearches:2, lastFreeReset:getBeijingDate(), usedPasswords:[],
-                teamId:null, isSharing:false, contribution:[], friends:[],
-                teamData:{}, pendingFriendRequests:[], pendingTeamInvites:[]
+                freeSearches:2, lastFreeReset:getBeijingDate(), usedPasswords:[]
             };
             users.push(newUser);
             saveUsers(users);
@@ -485,27 +516,19 @@
             <div class="card"><h2>📜 幸存者档案</h2><div>力量 ${stats.strength} | 速度 ${stats.speed} | 智力 ${stats.intelligence} | 灵感 ${stats.inspiration} | 幸运 ${stats.luck} (总${stats.strength+stats.speed+stats.intelligence+stats.inspiration+stats.luck}/16)</div>
             <div class="search-panel"><div class="badge">✨ 今日免费搜寻: ${freeLeft} 次</div><button id="free-search-btn">🔍 免费搜寻</button><div class="input-group"><label>物资密码</label><input id="password-input"></div><button id="pwd-search-btn">🔐 密码搜寻</button></div></div>
             <div class="card"><h2>📦 随身物资 <span style="font-size:0.7rem;">(点击名称查看描述)</span></h2><div id="inventory-list" class="inventory-grid"></div></div>
-            <div class="card"><h2>🤝 小队系统</h2><div id="team-panel"></div></div>
-            <div class="card"><h2>👥 好友系统</h2><div id="friend-panel"></div></div>
-            <div class="card"><h2>🎁 物资赠予</h2><div class="search-panel"><div class="input-group"><label>接收者用户名</label><input id="gift-target"></div><button id="gift-search-btn">🔎 查找用户</button></div><div id="gift-result"></div></div>
             <div class="card"><h2>⚒️ 废土工坊 · 合成</h2><div class="recipe-list" id="recipe-list"></div><div id="craft-msg" class="alert"></div></div>
-            <footer>⚠️ 每日0点(北京时间)重置免费搜寻次数至1次，初始额外赠送2次。每次搜寻可获得3个物资。小队密钥可用于加入队伍。</footer>`;
+            <footer>⚠️ 每日0点(北京时间)重置免费搜寻次数至1次，初始额外赠送2次。每次搜寻可获得3个物资。</footer>`;
         document.getElementById("logout-btn").onclick=()=>{currentUser=null;render();};
         document.getElementById("free-search-btn").onclick=performFreeSearch;
         document.getElementById("pwd-search-btn").onclick=()=>{const pwd=document.getElementById("password-input").value.trim();if(pwd)performPasswordSearch(pwd);else showMsg("请输入密码","#craft-msg");};
-        document.getElementById("gift-search-btn").onclick=showGiftPanel;
         refreshInventoryDisplay();
         renderRecipes();
-        renderTeamPanel();
-        renderFriendPanel();
     }
 
     function refreshInventoryDisplay() {
         const div=document.getElementById("inventory-list");
         if(!div) return;
-        let inv;
-        if(currentUser.teamId && currentUser.isSharing && currentTeam) inv=currentTeam.publicInventory;
-        else inv=currentUser.inventory;
+        const inv=currentUser.inventory;
         if(!inv.length){div.innerHTML="<div>空无一物</div>";return;}
         div.innerHTML=inv.map(item=>`<div class="inv-item"><span class="inv-name" title="${getItemDescription(item.name)}" onclick="alert('${getItemDescription(item.name).replace(/'/g,"\\'")}')">${item.name}</span><span class="inv-qty">✖️${item.amount}</span></div>`).join("");
     }
@@ -520,18 +543,13 @@
         }
         alert("🔍 搜寻获得：\n" + loots.map(l => `${l.name} x${l.amount}`).join("\n"));
         for(const loot of loots){
-            if(currentUser.teamId && currentUser.isSharing && currentTeam) {
-                addToPublicAndContribution(currentTeam,loot);
-            } else {
-                currentUser.inventory.push(loot);
-                currentUser.inventory=mergeInventory(currentUser.inventory);
-            }
+            currentUser.inventory.push(loot);
+            currentUser.inventory=mergeInventory(currentUser.inventory);
         }
         currentUser.freeSearches--;
-        updateUserAndTeam();
+        updateUser();
         showMsg(`获得 ${loots.length} 个物资`,"#craft-msg");
         refreshInventoryDisplay();
-        renderTeamPanel();
     }
 
     function performPasswordSearch(pwd) {
@@ -545,432 +563,20 @@
         }
         alert("🔐 密码搜寻获得：\n" + loots.map(l => `${l.name} x${l.amount}`).join("\n"));
         for(const loot of loots){
-            if(currentUser.teamId && currentUser.isSharing && currentTeam) {
-                addToPublicAndContribution(currentTeam,loot);
-            } else {
-                currentUser.inventory.push(loot);
-                currentUser.inventory=mergeInventory(currentUser.inventory);
-            }
+            currentUser.inventory.push(loot);
+            currentUser.inventory=mergeInventory(currentUser.inventory);
         }
         currentUser.usedPasswords.push(pwd);
-        updateUserAndTeam();
+        updateUser();
         showMsg(`获得 ${loots.length} 个物资`,"#craft-msg");
         refreshInventoryDisplay();
-        renderTeamPanel();
     }
 
-    function addToPublicAndContribution(team,item) {
-        const existing=team.publicInventory.find(i=>i.name===item.name);
-        if(existing) existing.amount+=item.amount;
-        else team.publicInventory.push({name:item.name,amount:item.amount});
-        const contribExisting=currentUser.contribution.find(c=>c.name===item.name);
-        if(contribExisting) contribExisting.amount+=item.amount;
-        else currentUser.contribution.push({name:item.name,amount:item.amount});
-    }
-
-    // =============================================================
-    // 小队系统（含邀请验证）
-    // =============================================================
-    function renderTeamPanel() {
-        const panel=document.getElementById("team-panel");
-        if(!panel) return;
-        if(!currentUser.teamId) {
-            const pendingInvites = currentUser.pendingTeamInvites || [];
-            let invitesHtml = "";
-            if(pendingInvites.length > 0){
-                invitesHtml = `<div><h4>📨 待处理的小队邀请</h4><div class="request-list">` +
-                    pendingInvites.map((inv,idx)=>`<div class="request-item"><span>${inv.from} 邀请你加入小队</span><button class="accept-team-invite" data-idx="${idx}">同意</button><button class="reject-team-invite" data-idx="${idx}">拒绝</button></div>`).join("") +
-                    `</div></div>`;
-            }
-            panel.innerHTML=`<div class="flex-between"><span>未加入任何小队</span><div><div class="input-group"><input id="invite-username" placeholder="用户名"></div><button id="create-team-btn">创建小队</button><button id="invite-btn">邀请加入</button></div></div>
-            <div class="search-panel"><div class="input-group"><label>小队密钥</label><input id="join-key-input" placeholder="输入小队密钥"></div><button id="join-by-key-btn">密钥加入</button></div>${invitesHtml}`;
-            document.getElementById("create-team-btn")?.addEventListener("click",createTeam);
-            document.getElementById("invite-btn")?.addEventListener("click",()=>sendTeamInvite(document.getElementById("invite-username").value.trim()));
-            document.getElementById("join-by-key-btn")?.addEventListener("click",()=>{const key=document.getElementById("join-key-input").value.trim();if(key)joinTeamByKey(key);else showMsg("请输入密钥","#craft-msg");});
-            document.querySelectorAll(".accept-team-invite").forEach(btn=>{
-                btn.addEventListener("click",()=>{
-                    const idx=parseInt(btn.dataset.idx);
-                    const invite=currentUser.pendingTeamInvites[idx];
-                    if(invite){
-                        const targetTeam = teamsStore[invite.teamId];
-                        if(targetTeam){
-                            targetTeam.members.push(currentUser.username);
-                            currentUser.teamId = invite.teamId;
-                            currentUser.isSharing = false;
-                            currentUser.contribution = [];
-                            currentUser.teamData = { key: targetTeam.key };
-                        }
-                        currentUser.pendingTeamInvites.splice(idx,1);
-                        updateUserAndTeam();
-                        renderDashboard(document.getElementById("app"));
-                        showMsg(`已加入 ${invite.from} 的小队`,"#craft-msg");
-                    }
-                });
-            });
-            document.querySelectorAll(".reject-team-invite").forEach(btn=>{
-                btn.addEventListener("click",()=>{
-                    const idx=parseInt(btn.dataset.idx);
-                    currentUser.pendingTeamInvites.splice(idx,1);
-                    updateUserAndTeam();
-                    renderTeamPanel();
-                    showMsg("已拒绝邀请","#craft-msg");
-                });
-            });
-            return;
-        }
-        const team=teamsStore[currentUser.teamId];
-        if(!team) {currentUser.teamId=null;updateUserAndTeam();renderTeamPanel();return;}
-        currentTeam=team;
-        const membersHtml=team.members.map(uname=>{
-            const user=loadUsers().find(u=>u.username===uname);
-            const shareStatus=user?.isSharing?"共享中":"私有";
-            const isCurrent=uname===currentUser.username;
-            return `<div class="member-item"><span>${uname}${isCurrent?" (你)":""} - ${shareStatus}</span>${isCurrent?`<button id="toggle-share-btn">${currentUser.isSharing?"退出共享":"加入共享"}</button><button id="quit-team-btn" class="danger-btn">退出小队</button>`:""}</div>`;
-        }).join("");
-        let pendingHtml="";
-        if(team.pendingQuitRequests && team.pendingQuitRequests.length>0){
-            pendingHtml="<h4>待处理退出请求</h4>";
-            team.pendingQuitRequests.forEach((req,idx)=>{
-                const itemsStr=req.items.map(i=>`${i.name} x${i.amount}`).join(", ");
-                const voted=req.votes.includes(currentUser.username);
-                pendingHtml+=`<div class="vote-request"><strong>${req.username}</strong> 请求带走: ${itemsStr}<br>同意票: ${req.votes.length}/${team.members.length}${voted?" (已投票)":` <button class="vote-yes" data-idx="${idx}">同意</button>`}</div>`;
-            });
-        }
-        panel.innerHTML=`<div><strong>小队密钥：</strong><span class="team-key">${team.key || "未设置"}</span></div>
-        <h3>小队成员</h3><div class="member-list">${membersHtml}</div>
-        <div class="flex-between"><div class="input-group"><input id="invite-new" placeholder="邀请用户名"></div><button id="invite-member-btn">邀请加入</button></div>
-        ${currentUser.isSharing?`<div><strong>小队公共仓库</strong><div id="team-inventory" class="inventory-grid" style="max-height:200px;"></div></div>`:""}
-        ${pendingHtml}`;
-        document.getElementById("toggle-share-btn")?.addEventListener("click",toggleShare);
-        document.getElementById("quit-team-btn")?.addEventListener("click",startQuit);
-        document.getElementById("invite-member-btn")?.addEventListener("click",()=>sendTeamInvite(document.getElementById("invite-new").value.trim()));
-        if(currentUser.isSharing && team.publicInventory) {
-            const teamInvDiv=document.getElementById("team-inventory");
-            if(teamInvDiv) teamInvDiv.innerHTML=team.publicInventory.map(i=>`<div class="inv-item"><span>${i.name}</span><span>✖️${i.amount}</span></div>`).join("");
-        }
-        document.querySelectorAll(".vote-yes").forEach(btn=>{
-            btn.addEventListener("click",()=>{
-                const idx=parseInt(btn.dataset.idx);
-                const req=team.pendingQuitRequests[idx];
-                if(req && !req.votes.includes(currentUser.username)){
-                    req.votes.push(currentUser.username);
-                    if(req.votes.length > team.members.length/2) executeQuit(req.username);
-                    else { updateUserAndTeam(); renderTeamPanel(); }
-                }
-            });
-        });
-    }
-
-    function createTeam() {
-        if(currentUser.teamId){showMsg("已在小队中","#craft-msg");return;}
-        const teamId="team_"+Date.now()+"_"+Math.random().toString(36);
-        const teamKey = Math.random().toString(36).substring(2,8).toUpperCase();
-        const newTeam={id:teamId, members:[currentUser.username], publicInventory:[], pendingQuitRequests:[], key: teamKey};
-        teamsStore[teamId]=newTeam;
-        currentUser.teamId=teamId;
-        currentUser.isSharing=false;
-        currentUser.contribution=[];
-        currentUser.teamData = { key: teamKey };
-        updateUserAndTeam();
-        renderDashboard(document.getElementById("app"));
-        showMsg(`小队创建成功！密钥：${teamKey}，可分享给其他玩家加入。`,"#craft-msg");
-    }
-
-    function joinTeamByKey(key) {
-        if(currentUser.teamId){showMsg("你已在小队中，请先退出当前小队","#craft-msg");return;}
-        let targetTeam = null;
-        for(const tid in teamsStore) if(teamsStore[tid].key === key) { targetTeam = teamsStore[tid]; break; }
-        if(!targetTeam){showMsg("无效的小队密钥","#craft-msg");return;}
-        targetTeam.members.push(currentUser.username);
-        currentUser.teamId = targetTeam.id;
-        currentUser.isSharing = false;
-        currentUser.contribution = [];
-        currentUser.teamData = { key: targetTeam.key };
-        updateUserAndTeam();
-        renderDashboard(document.getElementById("app"));
-        showMsg(`成功加入小队！`,"#craft-msg");
-    }
-
-    function sendTeamInvite(targetName) {
-        if(!targetName){showMsg("输入用户名","#craft-msg");return;}
-        if(targetName===currentUser.username){showMsg("不能邀请自己","#craft-msg");return;}
+    function updateUser() {
         const users=loadUsers();
-        const target=users.find(u=>u.username===targetName);
-        if(!target){showMsg("用户不存在","#craft-msg");return;}
-        if(target.teamId){showMsg("对方已有小队","#craft-msg");return;}
-        if(!currentUser.teamId){showMsg("请先创建小队","#craft-msg");return;}
-        const team=teamsStore[currentUser.teamId];
-        if(team.members.includes(targetName)){showMsg("已在队中","#craft-msg");return;}
-        if(!target.pendingTeamInvites) target.pendingTeamInvites=[];
-        target.pendingTeamInvites.push({ from: currentUser.username, teamId: team.id, teamKey: team.key });
+        const idx=users.findIndex(u=>u.username===currentUser.username);
+        if(idx!==-1) users[idx]=currentUser;
         saveUsers(users);
-        showMsg(`已向 ${targetName} 发送小队邀请`,"#craft-msg");
-    }
-
-    function toggleShare() {
-        if(!currentUser.teamId) return;
-        const team=teamsStore[currentUser.teamId];
-        if(!team) return;
-        if(!currentUser.isSharing) {
-            for(const item of currentUser.inventory) addToPublicAndContribution(team,item);
-            currentUser.inventory=[];
-            currentUser.isSharing=true;
-        } else {
-            currentUser.isSharing=false;
-        }
-        updateUserAndTeam();
-        renderTeamPanel();
-        refreshInventoryDisplay();
-        showMsg(`已${currentUser.isSharing?"加入共享":"退出共享"}`,"#craft-msg");
-    }
-
-    function startQuit() {
-        if(!currentUser.teamId) return;
-        const team=teamsStore[currentUser.teamId];
-        if(!team) return;
-        if(!currentUser.isSharing) {
-            executeQuit(currentUser.username);
-            return;
-        }
-        const contribution=currentUser.contribution;
-        if(!contribution.length){
-            executeQuit(currentUser.username);
-            return;
-        }
-        let modal=document.createElement("div");
-        modal.style.position="fixed";modal.style.top="50%";modal.style.left="50%";modal.style.transform="translate(-50%,-50%)";
-        modal.style.background="#1b2329";modal.style.padding="20px";modal.style.borderRadius="28px";modal.style.zIndex=1000;modal.style.width="400px";
-        let options=contribution.map(c=>`<div><label>${c.name} (最多 ${c.amount})</label><input type="number" min="0" max="${c.amount}" data-name="${c.name}" value="0" class="quit-qty"></div>`).join("");
-        modal.innerHTML=`<h3>选择要带走的物资（不超过贡献）</h3>${options}<button id="submit-quit">确认并申请退出</button><button id="cancel-quit">取消</button>`;
-        document.body.appendChild(modal);
-        const overlay=document.createElement("div");
-        overlay.style.position="fixed";overlay.style.top=0;overlay.style.left=0;overlay.style.right=0;overlay.style.bottom=0;
-        overlay.style.background="rgba(0,0,0,0.7)";overlay.style.zIndex=999;
-        document.body.appendChild(overlay);
-        document.getElementById("submit-quit").onclick=()=>{
-            const items=[];
-            document.querySelectorAll(".quit-qty").forEach(input=>{
-                const qty=parseInt(input.value);
-                if(qty>0){
-                    const name=input.dataset.name;
-                    items.push({name,amount:qty});
-                }
-            });
-            if(items.length===0){ alert("请至少选择一件物资"); return; }
-            let valid=true;
-            for(const it of items){
-                const contrib=contribution.find(c=>c.name===it.name);
-                if(!contrib || it.amount>contrib.amount) valid=false;
-            }
-            if(!valid){alert("选择数量超过贡献");return;}
-            const request={username:currentUser.username,items, votes:[]};
-            if(!team.pendingQuitRequests) team.pendingQuitRequests=[];
-            team.pendingQuitRequests.push(request);
-            updateUserAndTeam();
-            modal.remove();overlay.remove();
-            showMsg("退出请求已发送，等待小队投票","#craft-msg");
-            renderTeamPanel();
-        };
-        document.getElementById("cancel-quit").onclick=()=>{modal.remove();overlay.remove();};
-    }
-
-    function executeQuit(username) {
-        const users=loadUsers();
-        const user=users.find(u=>u.username===username);
-        if(!user) return;
-        const team=teamsStore[user.teamId];
-        if(!team) return;
-        let pendingReq=null;
-        if(team.pendingQuitRequests){
-            const idx=team.pendingQuitRequests.findIndex(r=>r.username===username);
-            if(idx!==-1) pendingReq=team.pendingQuitRequests[idx];
-        }
-        if(user.isSharing && pendingReq){
-            for(const it of pendingReq.items){
-                const pubItem=team.publicInventory.find(i=>i.name===it.name);
-                if(pubItem) pubItem.amount-=it.amount;
-                const userItem=user.inventory.find(i=>i.name===it.name);
-                if(userItem) userItem.amount+=it.amount;
-                else user.inventory.push({name:it.name,amount:it.amount});
-                const contrib=user.contribution.find(c=>c.name===it.name);
-                if(contrib) contrib.amount-=it.amount;
-            }
-            team.publicInventory=team.publicInventory.filter(i=>i.amount>0);
-            user.inventory=mergeInventory(user.inventory);
-            user.contribution=user.contribution.filter(c=>c.amount>0);
-        }
-        team.members=team.members.filter(m=>m!==username);
-        user.teamId=null;
-        user.isSharing=false;
-        user.teamData={};
-        if(team.pendingQuitRequests) team.pendingQuitRequests=team.pendingQuitRequests.filter(r=>r.username!==username);
-        if(team.members.length===0) delete teamsStore[team.id];
-        saveUsers(users);
-        if(username===currentUser.username){
-            currentUser=user;
-            currentTeam=null;
-            renderDashboard(document.getElementById("app"));
-        } else {
-            renderTeamPanel();
-        }
-        showMsg(`${username} 已退出小队`,"#craft-msg");
-    }
-
-    // =============================================================
-    // 好友系统（含申请验证）
-    // =============================================================
-    function renderFriendPanel() {
-        const panel=document.getElementById("friend-panel");
-        if(!panel) return;
-        const pendingRequests = currentUser.pendingFriendRequests || [];
-        let requestsHtml = "";
-        if(pendingRequests.length > 0){
-            requestsHtml = `<div><h4>📨 好友申请</h4><div class="request-list">` +
-                pendingRequests.map((req,idx)=>`<div class="request-item"><span>${req.from} 申请加为好友</span><button class="accept-friend" data-idx="${idx}">同意</button><button class="reject-friend" data-idx="${idx}">拒绝</button></div>`).join("") +
-                `</div></div>`;
-        }
-        const friends = currentUser.friends || [];
-        panel.innerHTML = `
-            <div class="search-panel">
-                <div class="input-group"><label>搜索用户名</label><input id="search-friend-name" placeholder="用户名"></div>
-                <button id="add-friend-btn">➕ 发送好友申请</button>
-            </div>
-            ${requestsHtml}
-            <h3>好友列表</h3>
-            <div class="friend-list" id="friend-list"></div>
-        `;
-        document.getElementById("add-friend-btn")?.addEventListener("click",()=>{
-            const targetName = document.getElementById("search-friend-name").value.trim();
-            if(!targetName){showMsg("请输入用户名","#craft-msg");return;}
-            if(targetName === currentUser.username){showMsg("不能添加自己为好友","#craft-msg");return;}
-            const users=loadUsers();
-            const target = users.find(u=>u.username===targetName);
-            if(!target){showMsg("用户不存在","#craft-msg");return;}
-            if(currentUser.friends.includes(targetName)){showMsg("已经是好友了","#craft-msg");return;}
-            if(!target.pendingFriendRequests) target.pendingFriendRequests=[];
-            if(target.pendingFriendRequests.some(r=>r.from===currentUser.username)){showMsg("已发送过申请，请等待对方处理","#craft-msg");return;}
-            target.pendingFriendRequests.push({ from: currentUser.username });
-            saveUsers(users);
-            showMsg(`已向 ${targetName} 发送好友申请`,"#craft-msg");
-        });
-        document.querySelectorAll(".accept-friend").forEach(btn=>{
-            btn.addEventListener("click",()=>{
-                const idx=parseInt(btn.dataset.idx);
-                const req=currentUser.pendingFriendRequests[idx];
-                if(req){
-                    const users=loadUsers();
-                    const requester = users.find(u=>u.username===req.from);
-                    if(requester){
-                        if(!currentUser.friends.includes(req.from)) currentUser.friends.push(req.from);
-                        if(!requester.friends.includes(currentUser.username)) requester.friends.push(currentUser.username);
-                        saveUsers(users);
-                    }
-                    currentUser.pendingFriendRequests.splice(idx,1);
-                    updateUserAndTeam();
-                    renderFriendPanel();
-                    showMsg(`已添加 ${req.from} 为好友`,"#craft-msg");
-                }
-            });
-        });
-        document.querySelectorAll(".reject-friend").forEach(btn=>{
-            btn.addEventListener("click",()=>{
-                const idx=parseInt(btn.dataset.idx);
-                currentUser.pendingFriendRequests.splice(idx,1);
-                updateUserAndTeam();
-                renderFriendPanel();
-                showMsg("已拒绝好友申请","#craft-msg");
-            });
-        });
-        const friendDiv = document.getElementById("friend-list");
-        if(friends.length===0){
-            friendDiv.innerHTML = "<div>暂无好友，快去添加吧！</div>";
-            return;
-        }
-        friendDiv.innerHTML = friends.map(friendName => {
-            return `<div class="friend-item">
-                        <span>${friendName}</span>
-                        <div style="display:flex; gap:6px;">
-                            <button class="friend-invite" data-name="${friendName}">📨 邀请入队</button>
-                            <button class="friend-gift" data-name="${friendName}">🎁 赠送物资</button>
-                        </div>
-                    </div>`;
-        }).join("");
-        document.querySelectorAll(".friend-invite").forEach(btn=>{
-            btn.addEventListener("click",()=>{
-                const friend = btn.dataset.name;
-                if(!currentUser.teamId){showMsg("请先创建或加入一个小队","#craft-msg");return;}
-                sendTeamInvite(friend);
-            });
-        });
-        document.querySelectorAll(".friend-gift").forEach(btn=>{
-            btn.addEventListener("click",()=>{
-                const friend = btn.dataset.name;
-                const targetInput = document.getElementById("gift-target");
-                if(targetInput) targetInput.value = friend;
-                showGiftPanel();
-            });
-        });
-    }
-
-    // =============================================================
-    // 赠予系统
-    // =============================================================
-    function showGiftPanel() {
-        const targetName=document.getElementById("gift-target").value.trim();
-        if(!targetName){showMsg("请输入用户名","#craft-msg");return;}
-        const users=loadUsers();
-        const target=users.find(u=>u.username===targetName);
-        if(!target){showMsg("用户不存在","#craft-msg");return;}
-        if(target.username===currentUser.username){showMsg("不能赠送给自己","#craft-msg");return;}
-        let sourceInv;
-        if(currentUser.teamId && currentUser.isSharing && currentTeam) sourceInv=currentTeam.publicInventory;
-        else sourceInv=currentUser.inventory;
-        if(sourceInv.length===0){showMsg("没有物资可赠送","#craft-msg");return;}
-        let options=sourceInv.map(i=>`<option value="${i.name}">${i.name} (x${i.amount})</option>`).join("");
-        let modal=document.createElement("div");
-        modal.id="gift-modal";
-        modal.style.position="fixed";modal.style.top="50%";modal.style.left="50%";modal.style.transform="translate(-50%,-50%)";
-        modal.style.background="#1b2329";modal.style.padding="20px";modal.style.borderRadius="28px";modal.style.zIndex=1000;modal.style.width="300px";
-        modal.innerHTML=`<h3>赠送物资给 ${targetName}</h3><select id="gift-item">${options}</select><input id="gift-qty" type="number" min="1" placeholder="数量"><button id="confirm-gift">赠送</button><button id="close-gift">取消</button>`;
-        document.body.appendChild(modal);
-        const overlay=document.createElement("div");
-        overlay.style.position="fixed";overlay.style.top=0;overlay.style.left=0;overlay.style.right=0;overlay.style.bottom=0;
-        overlay.style.background="rgba(0,0,0,0.7)";overlay.style.zIndex=999;
-        document.body.appendChild(overlay);
-        document.getElementById("confirm-gift").onclick=()=>{
-            const itemName=document.getElementById("gift-item").value;
-            const qty=parseInt(document.getElementById("gift-qty").value);
-            if(isNaN(qty)||qty<=0){alert("数量无效");return;}
-            let srcInv;
-            if(currentUser.teamId && currentUser.isSharing && currentTeam) srcInv=currentTeam.publicInventory;
-            else srcInv=currentUser.inventory;
-            const srcItem=srcInv.find(i=>i.name===itemName);
-            if(!srcItem||srcItem.amount<qty){alert("物资不足");return;}
-            srcItem.amount-=qty;
-            if(srcItem.amount===0) srcInv.splice(srcInv.indexOf(srcItem),1);
-            const targetUser=users.find(u=>u.username===targetName);
-            if(targetUser){
-                if(targetUser.teamId && targetUser.isSharing && teamsStore[targetUser.teamId]){
-                    const team=teamsStore[targetUser.teamId];
-                    const pubItem=team.publicInventory.find(i=>i.name===itemName);
-                    if(pubItem) pubItem.amount+=qty;
-                    else team.publicInventory.push({name:itemName,amount:qty});
-                    const contrib=targetUser.contribution.find(c=>c.name===itemName);
-                    if(contrib) contrib.amount+=qty;
-                    else targetUser.contribution.push({name:itemName,amount:qty});
-                } else {
-                    const existing=targetUser.inventory.find(i=>i.name===itemName);
-                    if(existing) existing.amount+=qty;
-                    else targetUser.inventory.push({name:itemName,amount:qty});
-                }
-                saveUsers(users);
-            }
-            updateUserAndTeam();
-            modal.remove();overlay.remove();
-            showMsg(`成功赠送 ${qty} 个 ${itemName} 给 ${targetName}`,"#craft-msg");
-            renderDashboard(document.getElementById("app"));
-        };
-        document.getElementById("close-gift").onclick=()=>{modal.remove();overlay.remove();};
     }
 
     // =============================================================
@@ -979,9 +585,7 @@
     function renderRecipes() {
         const div=document.getElementById("recipe-list");
         if(!div) return;
-        let inv;
-        if(currentUser.teamId && currentUser.isSharing && currentTeam) inv=currentTeam.publicInventory;
-        else inv=currentUser.inventory;
+        const inv=currentUser.inventory;
         div.innerHTML=RECIPES.map((rec,idx)=>{
             let canCraft = true;
             if(rec.requireTool){
@@ -1003,34 +607,17 @@
     }
 
     function craftRecipe(recipe) {
-        let inv, isPublic=false;
-        if(currentUser.teamId && currentUser.isSharing && currentTeam) { inv=currentTeam.publicInventory; isPublic=true; }
-        else inv=currentUser.inventory;
+        const inv=currentUser.inventory;
         if(recipe.requireTool && !inv.some(i=>i.name===recipe.requireTool && i.amount>=1)){ showMsg(`缺少工具: ${recipe.requireTool}`,"#craft-msg"); return; }
         for(const cost of recipe.costs){ const item=inv.find(i=>i.name===cost.name); if(!item||item.amount<cost.qty){ showMsg("材料不足","#craft-msg"); return; } }
         for(const cost of recipe.costs){ const idx=inv.findIndex(i=>i.name===cost.name); inv[idx].amount-=cost.qty; if(inv[idx].amount===0) inv.splice(idx,1); }
         const existing=inv.find(i=>i.name===recipe.target);
         if(existing) existing.amount+=recipe.targetAmount;
         else inv.push({name:recipe.target,amount:recipe.targetAmount});
-        if(isPublic && currentTeam){
-            const contribExisting=currentUser.contribution.find(c=>c.name===recipe.target);
-            if(contribExisting) contribExisting.amount+=recipe.targetAmount;
-            else currentUser.contribution.push({name:recipe.target,amount:recipe.targetAmount});
-        }
-        updateUserAndTeam();
+        updateUser();
         showMsg(`✅ 合成 ${recipe.target} x${recipe.targetAmount}`,"#craft-msg");
         refreshInventoryDisplay();
         renderRecipes();
-        renderTeamPanel();
-    }
-
-    function updateUserAndTeam() {
-        const users=loadUsers();
-        const idx=users.findIndex(u=>u.username===currentUser.username);
-        if(idx!==-1) users[idx]=currentUser;
-        saveUsers(users);
-        if(currentUser.teamId) currentTeam=teamsStore[currentUser.teamId];
-        else currentTeam=null;
     }
 
     function showMsg(msg,selector="#craft-msg") {
